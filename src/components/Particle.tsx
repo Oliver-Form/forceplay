@@ -8,7 +8,7 @@ type Props = {
 }
 
 export default function Particle({ particle }: Props) {
-  const { x, y, radius, color } = particle
+  const { x = 0, y = 0, radius, color } = particle // Default x and y to 0 if undefined or NaN
 
   return (
     <circle
