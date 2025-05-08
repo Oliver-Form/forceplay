@@ -4,6 +4,4 @@ export type Particle = {
   y: number
   radius: number
   color: string
-  mass: number
-  velocity: number
 }
