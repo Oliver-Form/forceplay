@@ -59,26 +59,33 @@ export default function ParticleField() {
       const updatedParticles = [...prevParticles]
 
       // Handle collisions between particles
-      for (let i = 0; i < updatedParticles.length - 1; i++) {
-        const p1 = updatedParticles[i]
-        const p2 = updatedParticles[i + 1]
+      for (let i = 0; i < updatedParticles.length; i++) {
+        for (let j = i + 1; j < updatedParticles.length; j++) {
+          const p1 = updatedParticles[i]
+          const p2 = updatedParticles[j]
 
-        if (Math.abs(p1.x - p2.x) <= p1.radius + p2.radius) {
-          // Conservation of linear momentum and Newton's experimental law (e=1)
-          const v1 = p1.velocity
-          const v2 = p2.velocity
-          const m1 = p1.mass
-          const m2 = p2.mass
+          const distance = Math.abs(p1.x - p2.x)
+          const combinedRadius = p1.radius + p2.radius
 
-          updatedParticles[i].velocity = ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2)
-          updatedParticles[i + 1].velocity = ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2)
+          if (distance <= combinedRadius) {
+            // Conservation of linear momentum and Newton's experimental law (e=1)
+            const v1 = p1.velocity
+            const v2 = p2.velocity
+            const m1 = p1.mass
+            const m2 = p2.mass
+
+            updatedParticles[i].velocity = ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2)
+            updatedParticles[j].velocity = ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2)
+          }
         }
       }
 
       // Handle collisions with walls
       updatedParticles.forEach((particle) => {
-        if (particle.x - particle.radius <= minX || particle.x + particle.radius >= maxX) {
-          particle.velocity *= -1 // Reverse velocity on wall collision
+        if (particle.x - particle.radius <= minX) {
+          particle.velocity = Math.abs(particle.velocity) // Reverse velocity to move right
+        } else if (particle.x + particle.radius >= maxX) {
+          particle.velocity = -Math.abs(particle.velocity) // Reverse velocity to move left
         }
       })
 
