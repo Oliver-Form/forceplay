@@ -1,16 +1,21 @@
 'use client';
 
+// imports for the project
 import React, { useRef, useEffect, useState } from 'react';
 import { World } from '../lib/physics/World';
 import { Particle } from '../lib/physics/Particle';
 import EditableCell from './EditableCell';
 import { Vector2D } from '../lib/physics/Vector2D';
 
+// declare constants
 const canvasWidth = 1900;
 const canvasHeight = 700;
 const particleRadius = 10;
 
+
+// declare instance of World object
 const world = new World();
+
 
 export default function WorldCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,6 +29,25 @@ export default function WorldCanvas() {
     draw();
   }, []);
 
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsPlaying((prev) => !prev); // Toggle play/pause
+        e.preventDefault(); // Prevent default scrolling behavior
+      } else if (e.key.toLowerCase() === 'n') {
+        const newParticle = new Particle(canvasWidth / 2, canvasHeight / 2, 0, 0, 1);
+        world.addParticle(newParticle);
+        draw();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   // Draw all particles
   const draw = () => {
     const ctx = canvasRef.current?.getContext('2d');
@@ -31,10 +55,24 @@ export default function WorldCanvas() {
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     for (const p of world.particles) {
+      const flippedY = canvasHeight - p.position.y; // Flip y-coordinate to fix coordinates system.
+
       ctx.beginPath();
-      ctx.arc(p.position.x, p.position.y, particleRadius, 0, 2 * Math.PI);
-      ctx.fillStyle = 'blue';
+      ctx.arc(p.position.x, flippedY, particleRadius, 0, 2 * Math.PI);
+      ctx.fillStyle = 'white'; // Set circle color to white
       ctx.fill();
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw the label
+      ctx.fillStyle = 'black'; // Set text color to black
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const index = world.particles.indexOf(p);
+      const label = String.fromCharCode(65 + (index % 26)) + (index >= 26 ? Math.floor(index / 26) : '');
+      ctx.fillText(label, p.position.x, flippedY);
     }
   };
 
@@ -91,6 +129,19 @@ export default function WorldCanvas() {
             <tr key={index}>
               <td>
                 {String.fromCharCode(65 + (index % 26)) + (index >= 26 ? Math.floor(index / 26) : '')}
+                <button
+                  onClick={() => {
+                  world.particles.splice(index, 1); // Remove the particle at the given index
+                  draw();
+                  }}
+                  style={{ marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '12px' }}
+                >
+                  <img
+                  src="/delete-button.svg"
+                  alt="Delete"
+                  style={{ width: '16px', height: '16px' }}
+                  />
+                </button>
               </td>
 
               {/* Position */}
@@ -105,9 +156,9 @@ export default function WorldCanvas() {
               />
               <EditableCell
                 key={`pos-y-${index}`}
-                value={p.position.y}
+                value={p.position.y} // Display y-coordinate as is
                 onConfirm={(val) => {
-                  p.position.y = val;
+                  p.position.y = val; // Update y-coordinate directly
                   draw();
                 }}
                 setIsPlaying={setIsPlaying}
@@ -146,6 +197,22 @@ export default function WorldCanvas() {
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan={6} style={{ textAlign: 'center', padding: '8px' }}>
+              <button
+                onClick={() => {
+                  const newParticle = new Particle(canvasWidth / 2, canvasHeight / 2, 0, 0, 1);
+                  world.addParticle(newParticle);
+                  draw();
+                }}
+                style={{ cursor: 'pointer', padding: '4px 8px', fontSize: '16px' }}
+              >
+                + Add Particle
+              </button>
+            </td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
