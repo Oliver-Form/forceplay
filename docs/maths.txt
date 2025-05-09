@@ -1,0 +1,72 @@
+# Mathematical Foundations of the Project
+
+This document provides an in-depth explanation of the mathematical principles and operations used in the project.
+
+## 1. Vector Operations
+
+The `Vector2D` class implements basic 2D vector operations:
+
+### Addition
+Given two vectors v1 = (x1, y1) and v2 = (x2, y2), their sum is:
+
+v1 + v2 = (x1 + x2, y1 + y2)
+
+This is implemented in the `add` method of the `Vector2D` class.
+
+### Scaling
+Scaling a vector v = (x, y) by a scalar s results in:
+
+s * v = (s * x, s * y)
+
+This is implemented in the `scale` method of the `Vector2D` class.
+
+## 2. Particle Dynamics
+
+The `Particle` class models a particle with position, velocity, and mass. The dynamics are governed by Newton's Second Law:
+
+F = m * a
+
+Where:
+- F is the net force acting on the particle.
+- m is the mass of the acceleration.
+- a is the acceleration.
+
+### Force Accumulation
+Forces are accumulated in the `forces` array. The net force is computed as:
+
+F_net = sum(F_i)
+
+### Position and Velocity Update
+The particle's velocity and position are updated using the equations of motion:
+
+a = F_net / m
+
+v = v + a * dt
+
+p = p + v * dt
+
+Where dt is the time step.
+
+## 3. World Physics
+
+The `World` class manages multiple particles and applies global forces like gravity. Gravity is modeled as:
+
+F_gravity = m * g
+
+Where g = (0, 9.81) m/s² is the gravitational acceleration.
+
+### Boundary Collisions
+Particles are constrained within a rectangular boundary (e.g., a canvas). Collisions with boundaries are handled by inverting the velocity component and applying a coefficient of restitution (e.g., 0.88):
+
+v_new = -e * v_old
+
+Where e is the coefficient of restitution.
+
+## 4. Simulation
+
+The simulation updates particle states in discrete time steps. Each step involves:
+1. Applying forces (e.g., gravity).
+2. Updating positions and velocities.
+3. Handling collisions.
+
+This approach ensures realistic motion and interactions within the simulated environment.

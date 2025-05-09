@@ -13,7 +13,7 @@ export class World {
   step(dt: number) {
     for (const p of this.particles) {
       // Apply gravity force
-      const gravity = new Vector2D(0, 9.81 * p.mass);  // F = m * g
+      const gravity = new Vector2D(0, 9.8 * p.mass);  // F = m * g
       p.applyForce(gravity);
 
       // Update the particle's position and velocity
