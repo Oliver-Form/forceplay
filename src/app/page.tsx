@@ -2,7 +2,8 @@ import WorldCanvas from '../components/WorldCanvas';
 
 export default function Home() {
   return (
-    <main style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+    <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2rem' }}>
+      <h1 style={{ textAlign: 'center' }}>ForcePlay</h1>
       <WorldCanvas />
     </main>
   );
