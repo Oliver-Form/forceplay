@@ -4,9 +4,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import { World } from '../lib/physics/World';
 import { Particle } from '../lib/physics/Particle';
 import EditableCell from './EditableCell';
+import { Vector2D } from '../lib/physics/Vector2D';
 
 const canvasWidth = 1900;
-const canvasHeight = 800;
+const canvasHeight = 700;
 const particleRadius = 10;
 
 const world = new World();
@@ -66,7 +67,11 @@ export default function WorldCanvas() {
       />
       <div style={{ marginTop: '1rem' }}>
         <button onClick={() => setIsPlaying(!isPlaying)}>
-          {isPlaying ? 'Pause' : 'Play'}
+            <img
+            src={isPlaying ? '/pause.svg' : '/play-button.svg'}
+            alt={isPlaying ? 'Pause' : 'Play'}
+            style={{ width: '24px', height: '24px' }}
+            />
         </button>
       </div>
 
@@ -84,33 +89,49 @@ export default function WorldCanvas() {
         <tbody>
           {world.particles.map((p, index) => (
             <tr key={index}>
-              <td>{index}</td>
+              <td>
+                {String.fromCharCode(65 + (index % 26)) + (index >= 26 ? Math.floor(index / 26) : '')}
+              </td>
 
               {/* Position */}
-              {['x', 'y'].map((axis) => (
-                <EditableCell
-                  key={`pos-${axis}-${index}`}
-                  value={p.position[axis]}
-                  onConfirm={(val) => {
-                    p.position[axis] = val;
-                    draw();
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
-              ))}
+              <EditableCell
+                key={`pos-x-${index}`}
+                value={p.position.x}
+                onConfirm={(val) => {
+                  p.position.x = val;
+                  draw();
+                }}
+                setIsPlaying={setIsPlaying}
+              />
+              <EditableCell
+                key={`pos-y-${index}`}
+                value={p.position.y}
+                onConfirm={(val) => {
+                  p.position.y = val;
+                  draw();
+                }}
+                setIsPlaying={setIsPlaying}
+              />
 
               {/* Velocity */}
-              {['x', 'y'].map((axis) => (
-                <EditableCell
-                  key={`vel-${axis}-${index}`}
-                  value={p.velocity[axis]}
-                  onConfirm={(val) => {
-                    p.velocity[axis] = val;
-                    draw();
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
-              ))}
+              <EditableCell
+                key={`vel-x-${index}`}
+                value={p.velocity.x}
+                onConfirm={(val) => {
+                  p.velocity.x = val;
+                  draw();
+                }}
+                setIsPlaying={setIsPlaying}
+              />
+              <EditableCell
+                key={`vel-y-${index}`}
+                value={p.velocity.y}
+                onConfirm={(val) => {
+                  p.velocity.y = val;
+                  draw();
+                }}
+                setIsPlaying={setIsPlaying}
+              />
 
               {/* Mass */}
               <EditableCell

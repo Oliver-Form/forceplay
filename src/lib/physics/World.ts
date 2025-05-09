@@ -22,7 +22,7 @@ export class World {
       // Boundary collisions (canvas boundaries)
       const r = 10; // Radius of particle (same as in canvas)
       const maxX = 1900; // Canvas width
-      const maxY = 800;  // Canvas height
+      const maxY = 700;  // Canvas height
 
       // Left and right boundaries
       if (p.position.x - r < 0) {
@@ -31,7 +31,7 @@ export class World {
       }
       if (p.position.x + r > maxX) {
         p.position.x = maxX - r;
-        p.velocity.x *= -0.88; // Apply coefficient of restitution (0.3)
+        p.velocity.x *= -0.88; // Apply coefficient of restitution (0.88)
       }
 
       // Top and bottom boundaries
