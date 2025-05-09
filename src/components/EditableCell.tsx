@@ -61,21 +61,21 @@ export default function EditableCell({
       ) : (
         <>
           <span>{inputVal}</span>
-          <button
+            <img
+            src="/edit-button.svg"
+            alt="Edit"
             onClick={handleEditClick}
-            style={{ marginLeft: '4px', padding: '2px 6px' }}
-          >
-            Edit
-          </button>
+            style={{ marginLeft: '4px', cursor: 'pointer', width: '16px', height: '16px' }}
+            />
         </>
       )}
       {isEditing && (
-        <button
+        <img
+          src="/check-mark.svg"
+          alt="Confirm"
           onClick={handleConfirm}
-          style={{ marginLeft: '4px', padding: '2px 6px' }}
-        >
-          ✅
-        </button>
+          style={{ marginLeft: '4px', cursor: 'pointer', width: '16px', height: '16px' }}
+        />
       )}
     </td>
   );
