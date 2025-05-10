@@ -5,6 +5,7 @@ export class Particle {
   velocity: Vector2D;
   mass: number;
   forces: Vector2D[] = [];
+  appliedForce: Vector2D = new Vector2D(0, 0);
 
   constructor(x: number, y: number, vx = 0, vy = 0, mass = 1) {
     this.position = new Vector2D(x, y);
@@ -20,10 +21,10 @@ export class Particle {
     const netForce = this.forces.reduce(
       (acc, f) => acc.add(f),
       new Vector2D(0, 0)
-    );
+    ).add(this.appliedForce); // Include appliedForce in net force
     const acceleration = netForce.scale(1 / this.mass);
     this.velocity = this.velocity.add(acceleration.scale(dt));
     this.position = this.position.add(this.velocity.scale(dt));
-    this.forces = [];
+    this.forces = []; // Clear forces after each update
   }
 }
