@@ -19,13 +19,31 @@ export class Particle {
   }
 
   update(dt: number) {
+    console.log(`Updating particle: isStationary=${this.isStationary}, position=${this.position}, velocity=${this.velocity}`);
+    if (this.isStationary) {
+      // Ensure stationary particles remain completely static
+      this.position = this.position; // Explicitly prevent position changes
+      this.velocity = new Vector2D(0, 0); // Reset velocity to zero
+      this.forces = []; // Clear forces to avoid accumulation
+      return;
+    }
+
     const netForce = this.forces.reduce(
       (acc, f) => acc.add(f),
       new Vector2D(0, 0)
     ).add(this.appliedForce); // Include appliedForce in net force
+    console.log(`Net force applied: ${netForce}`);
+
     const acceleration = netForce.scale(1 / this.mass);
+    console.log(`Acceleration calculated: ${acceleration}`);
+
     this.velocity = this.velocity.add(acceleration.scale(dt));
+    console.log(`Updated velocity: ${this.velocity}`);
+
     this.position = this.position.add(this.velocity.scale(dt));
+    console.log(`Updated position: ${this.position}`);
+
     this.forces = []; // Clear forces after each update
+    console.log('Forces cleared after update');
   }
 }

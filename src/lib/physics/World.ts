@@ -74,10 +74,14 @@ export class World {
           const nx = dx / distance;
           const ny = dy / distance;
 
-          p1.position.x -= (overlap / 2) * nx;
-          p1.position.y -= (overlap / 2) * ny;
-          p2.position.x += (overlap / 2) * nx;
-          p2.position.y += (overlap / 2) * ny;
+          if (!p1.isStationary) {
+            p1.position.x -= (overlap / 2) * nx;
+            p1.position.y -= (overlap / 2) * ny;
+          }
+          if (!p2.isStationary) {
+            p2.position.x += (overlap / 2) * nx;
+            p2.position.y += (overlap / 2) * ny;
+          }
 
           // Resolve velocity using conservation of momentum and Newton's experimental law
           const relativeVelocityX = p2.velocity.x - p1.velocity.x;
@@ -89,15 +93,21 @@ export class World {
           }
 
           const e = 1; // Coefficient of restitution
-          const impulse = (-(1 + e) * dotProduct) / (1 / p1.mass + 1 / p2.mass);
+          const mass1 = p1.isStationary ? Infinity : p1.mass;
+          const mass2 = p2.isStationary ? Infinity : p2.mass;
+          const impulse = (-(1 + e) * dotProduct) / (1 / mass1 + 1 / mass2);
 
           const impulseX = impulse * nx;
           const impulseY = impulse * ny;
 
-          p1.velocity.x -= impulseX / p1.mass;
-          p1.velocity.y -= impulseY / p1.mass;
-          p2.velocity.x += impulseX / p2.mass;
-          p2.velocity.y += impulseY / p2.mass;
+          if (!p1.isStationary) {
+            p1.velocity.x -= impulseX / p1.mass;
+            p1.velocity.y -= impulseY / p1.mass;
+          }
+          if (!p2.isStationary) {
+            p2.velocity.x += impulseX / p2.mass;
+            p2.velocity.y += impulseY / p2.mass;
+          }
         }
       }
     }
