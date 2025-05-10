@@ -22,6 +22,12 @@ export default function WorldCanvas() {
   const [frameTick, setFrameTick] = useState(0);
   const [selectedParticle, setSelectedParticle] = useState<Particle | null>(null);
 
+  const updateForce = (particle: Particle, fx: number, fy: number) => {
+    particle.appliedForce.x = fx;
+    particle.appliedForce.y = fy;
+    draw();
+  };
+
   // Initial setup
   useEffect(() => {
     const particle = new Particle(canvasWidth / 2, 50, 0, 0, 1);
@@ -143,6 +149,8 @@ export default function WorldCanvas() {
             <th>Velocity X</th>
             <th>Velocity Y</th>
             <th>Mass</th>
+            <th>Fx</th>
+            <th>Fy</th>
           </tr>
         </thead>
         <tbody>
@@ -215,12 +223,32 @@ export default function WorldCanvas() {
                 }}
                 setIsPlaying={setIsPlaying}
               />
+
+              {/* Force X */}
+              <EditableCell
+                key={`fx-${index}`}
+                value={p.appliedForce.x}
+                onConfirm={(val) => {
+                  updateForce(p, val, p.appliedForce.y);
+                }}
+                setIsPlaying={setIsPlaying}
+              />
+
+              {/* Force Y */}
+              <EditableCell
+                key={`fy-${index}`}
+                value={p.appliedForce.y}
+                onConfirm={(val) => {
+                  updateForce(p, p.appliedForce.x, val);
+                }}
+                setIsPlaying={setIsPlaying}
+              />
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={6} style={{ textAlign: 'center', padding: '8px' }}>
+            <td colSpan={8} style={{ textAlign: 'center', padding: '8px' }}>
               <button
                 onClick={() => {
                   const newParticle = new Particle(canvasWidth / 2, canvasHeight / 2, 0, 0, 1);

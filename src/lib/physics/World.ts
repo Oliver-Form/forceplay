@@ -14,10 +14,12 @@ export class World {
     for (const p of this.particles) {
       // Apply gravity force
       const gravity = new Vector2D(0, -9.8 * p.mass); // F = m * g, inverted for flipped y-axis
-      p.applyForce(gravity);
 
-      // Update the particle's position and velocity
-      p.update(dt);
+      // Include appliedForce in the net force calculation
+      const netForce = gravity.add(p.appliedForce);
+      const acceleration = netForce.scale(1 / p.mass);
+      p.velocity = p.velocity.add(acceleration.scale(dt));
+      p.position = p.position.add(p.velocity.scale(dt));
     }
 
     // Handle particle-to-particle collisions
