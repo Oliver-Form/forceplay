@@ -6,21 +6,21 @@ import { World } from '../lib/physics/World';
 import { Particle } from '../lib/physics/Particle';
 import EditableCell from './EditableCell';
 import { Vector2D } from '../lib/physics/Vector2D';
+import ParticleModal from './ParticleModal';
 
 // declare constants
 const canvasWidth = 1900;
 const canvasHeight = 700;
 const particleRadius = 10;
 
-
 // declare instance of World object
 const world = new World();
-
 
 export default function WorldCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [frameTick, setFrameTick] = useState(0);
+  const [selectedParticle, setSelectedParticle] = useState<Particle | null>(null);
 
   // Initial setup
   useEffect(() => {
@@ -47,6 +47,26 @@ export default function WorldCanvas() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  // Function to handle particle click
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const clickX = e.clientX - rect.left;
+    const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
+
+    const clickedParticle = world.particles.find((p) => {
+      const dx = p.position.x - clickX;
+      const dy = p.position.y - clickY;
+      return Math.sqrt(dx * dx + dy * dy) <= particleRadius;
+    });
+
+    if (clickedParticle) {
+      setIsPlaying(false); // Pause simulation
+      setSelectedParticle(clickedParticle);
+    }
+  };
 
   // Draw all particles
   const draw = () => {
@@ -102,6 +122,7 @@ export default function WorldCanvas() {
         width={canvasWidth}
         height={canvasHeight}
         style={{ border: '1px solid black' }}
+        onClick={handleCanvasClick}
       />
       <div style={{ marginTop: '1rem' }}>
         <button onClick={() => setIsPlaying(!isPlaying)}>
@@ -214,6 +235,24 @@ export default function WorldCanvas() {
           </tr>
         </tfoot>
       </table>
+
+      {selectedParticle && (
+        <ParticleModal
+          particle={{
+            position: selectedParticle.position,
+            velocity: selectedParticle.velocity,
+            mass: selectedParticle.mass,
+          }}
+          onSave={(updatedParticle) => {
+            selectedParticle.position = new Vector2D(updatedParticle.position.x, updatedParticle.position.y);
+            selectedParticle.velocity = new Vector2D(updatedParticle.velocity.x, updatedParticle.velocity.y);
+            selectedParticle.mass = updatedParticle.mass;
+            setSelectedParticle(null);
+            draw();
+          }}
+          onCancel={() => setSelectedParticle(null)}
+        />
+      )}
     </div>
   );
 }
