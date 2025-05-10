@@ -257,24 +257,26 @@ export default function WorldCanvas() {
                 }}
                 style={{ cursor: 'pointer', padding: '4px 8px', fontSize: '16px' }}
               >
-                + Add Particle
+                + Add Particle (n)
               </button>
             </td>
           </tr>
         </tfoot>
       </table>
-
+      //
       {selectedParticle && (
         <ParticleModal
           particle={{
             position: selectedParticle.position,
             velocity: selectedParticle.velocity,
             mass: selectedParticle.mass,
+            appliedForce: selectedParticle.appliedForce,
           }}
           onSave={(updatedParticle) => {
             selectedParticle.position = new Vector2D(updatedParticle.position.x, updatedParticle.position.y);
             selectedParticle.velocity = new Vector2D(updatedParticle.velocity.x, updatedParticle.velocity.y);
             selectedParticle.mass = updatedParticle.mass;
+            selectedParticle.appliedForce = new Vector2D(updatedParticle.appliedForce.x, updatedParticle.appliedForce.y);
             setSelectedParticle(null);
             draw();
           }}

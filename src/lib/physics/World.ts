@@ -1,26 +1,61 @@
 import { Particle } from './Particle';
 import { Vector2D } from './Vector2D';
+import { StringConstraint } from './StringConstraint';
 
 export class World {
   particles: Particle[] = [];
+  constraints: StringConstraint[] = [];
 
   // Add particle to the world
   addParticle(p: Particle) {
     this.particles.push(p);
   }
 
+  // Add a new string constraint between two particles
+  addStringConstraint(p1: Particle, p2: Particle) {
+    const distance = Math.sqrt(
+      Math.pow(p2.position.x - p1.position.x, 2) +
+      Math.pow(p2.position.y - p1.position.y, 2)
+    );
+    this.constraints.push(new StringConstraint(p1, p2, distance));
+  }
+
+  // Update constraints after particle updates
+  private updateConstraints() {
+    for (const constraint of this.constraints) {
+      const dx = constraint.p2.position.x - constraint.p1.position.x;
+      const dy = constraint.p2.position.y - constraint.p1.position.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const correction = (distance - constraint.length) / 2;
+
+      if (!constraint.p1.isStationary) {
+        constraint.p1.position.x += (correction * dx) / distance;
+        constraint.p1.position.y += (correction * dy) / distance;
+      }
+
+      if (!constraint.p2.isStationary) {
+        constraint.p2.position.x -= (correction * dx) / distance;
+        constraint.p2.position.y -= (correction * dy) / distance;
+      }
+    }
+  }
+
   // Run physics for each step ('time' delta dt)
   step(dt: number) {
     for (const p of this.particles) {
-      // Apply gravity force
-      const gravity = new Vector2D(0, -9.8 * p.mass); // F = m * g, inverted for flipped y-axis
+      if (!p.isStationary) {
+        // Apply gravity force
+        const gravity = new Vector2D(0, -9.8 * p.mass); // F = m * g, inverted for flipped y-axis
 
-      // Include appliedForce in the net force calculation
-      const netForce = gravity.add(p.appliedForce);
-      const acceleration = netForce.scale(1 / p.mass);
-      p.velocity = p.velocity.add(acceleration.scale(dt));
-      p.position = p.position.add(p.velocity.scale(dt));
+        // Include appliedForce in the net force calculation
+        const netForce = gravity.add(p.appliedForce);
+        const acceleration = netForce.scale(1 / p.mass);
+        p.velocity = p.velocity.add(acceleration.scale(dt));
+        p.position = p.position.add(p.velocity.scale(dt));
+      }
     }
+
+    this.updateConstraints();
 
     // Handle particle-to-particle collisions
     for (let i = 0; i < this.particles.length; i++) {

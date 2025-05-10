@@ -6,6 +6,7 @@ export class Particle {
   mass: number;
   forces: Vector2D[] = [];
   appliedForce: Vector2D = new Vector2D(0, 0);
+  isStationary: boolean = false;
 
   constructor(x: number, y: number, vx = 0, vy = 0, mass = 1) {
     this.position = new Vector2D(x, y);
