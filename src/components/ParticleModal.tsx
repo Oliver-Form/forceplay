@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
+import { Particle } from '../lib/physics/Particle';
+import { Vector2D } from '../lib/physics/Vector2D';
 
 interface ParticleModalProps {
   particle: {
-    position: { x: number; y: number };
-    velocity: { x: number; y: number };
+    position: Vector2D;
+    velocity: Vector2D;
     mass: number;
+    appliedForce: Vector2D;
   };
   onSave: (updatedParticle: {
-    position: { x: number; y: number };
-    velocity: { x: number; y: number };
+    position: Vector2D;
+    velocity: Vector2D;
     mass: number;
+    appliedForce: Vector2D;
   }) => void;
   onCancel: () => void;
 }
@@ -19,9 +23,10 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
   const [position, setPosition] = useState(particle.position);
   const [velocity, setVelocity] = useState(particle.velocity);
   const [mass, setMass] = useState(particle.mass);
+  const [appliedForce, setAppliedForce] = useState(particle.appliedForce);
 
   const handleSave = () => {
-    onSave({ position, velocity, mass });
+    onSave({ position, velocity, mass, appliedForce });
   };
 
   return ReactDOM.createPortal(
@@ -51,7 +56,7 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
             <input
               type="number"
               value={position.x}
-              onChange={(e) => setPosition({ ...position, x: parseFloat(e.target.value) })}
+              onChange={(e) => setPosition(new Vector2D(Number(e.target.value), position.y))}
             />
           </label>
         </div>
@@ -61,7 +66,7 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
             <input
               type="number"
               value={position.y}
-              onChange={(e) => setPosition({ ...position, y: parseFloat(e.target.value) })}
+              onChange={(e) => setPosition(new Vector2D(position.x, Number(e.target.value)))}
             />
           </label>
         </div>
@@ -71,7 +76,7 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
             <input
               type="number"
               value={velocity.x}
-              onChange={(e) => setVelocity({ ...velocity, x: parseFloat(e.target.value) })}
+              onChange={(e) => setVelocity(new Vector2D(Number(e.target.value), velocity.y))}
             />
           </label>
         </div>
@@ -81,7 +86,7 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
             <input
               type="number"
               value={velocity.y}
-              onChange={(e) => setVelocity({ ...velocity, y: parseFloat(e.target.value) })}
+              onChange={(e) => setVelocity(new Vector2D(velocity.x, Number(e.target.value)))}
             />
           </label>
         </div>
@@ -91,12 +96,34 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
             <input
               type="number"
               value={mass}
-              onChange={(e) => setMass(parseFloat(e.target.value))}
+              onChange={(e) => setMass(Number(e.target.value))}
+            />
+          </label>
+        </div>
+        <div>
+          <label>
+            Force X:
+            <input
+              type="number"
+              value={appliedForce.x}
+              onChange={(e) => setAppliedForce(new Vector2D(Number(e.target.value), appliedForce.y))}
+            />
+          </label>
+        </div>
+        <div>
+          <label>
+            Force Y:
+            <input
+              type="number"
+              value={appliedForce.y}
+              onChange={(e) => setAppliedForce(new Vector2D(appliedForce.x, Number(e.target.value)))}
             />
           </label>
         </div>
         <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-          <button onClick={handleSave}>✅ Save</button>
+            <button onClick={handleSave}>
+              <img src="/check-mark.svg" alt="Save" style={{ width: '16px', height: '16px' }} />
+            </button>
           <button onClick={onCancel}>Cancel</button>
         </div>
       </div>
