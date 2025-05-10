@@ -9,12 +9,14 @@ interface ParticleModalProps {
     velocity: Vector2D;
     mass: number;
     appliedForce: Vector2D;
+    isStationary: boolean; // Add isStationary to the particle type
   };
   onSave: (updatedParticle: {
     position: Vector2D;
     velocity: Vector2D;
     mass: number;
     appliedForce: Vector2D;
+    isStationary: boolean;
   }) => void;
   onCancel: () => void;
 }
@@ -24,9 +26,16 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
   const [velocity, setVelocity] = useState(particle.velocity);
   const [mass, setMass] = useState(particle.mass);
   const [appliedForce, setAppliedForce] = useState(particle.appliedForce);
+  const [isStationary, setIsStationary] = useState(particle.isStationary ?? false);
 
   const handleSave = () => {
-    onSave({ position, velocity, mass, appliedForce });
+    onSave({
+      position,
+      velocity,
+      mass,
+      appliedForce,
+      isStationary, // Include isStationary in the save
+    });
   };
 
   return ReactDOM.createPortal(
@@ -117,6 +126,16 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
               type="number"
               value={appliedForce.y}
               onChange={(e) => setAppliedForce(new Vector2D(appliedForce.x, Number(e.target.value)))}
+            />
+          </label>
+        </div>
+        <div>
+          <label>
+            Stationary:
+            <input
+              type="checkbox"
+              checked={isStationary}
+              onChange={(e) => setIsStationary(e.target.checked)}
             />
           </label>
         </div>

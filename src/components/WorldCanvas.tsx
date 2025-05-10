@@ -271,12 +271,14 @@ export default function WorldCanvas() {
             velocity: selectedParticle.velocity,
             mass: selectedParticle.mass,
             appliedForce: selectedParticle.appliedForce,
+            isStationary: selectedParticle.isStationary, // Ensure isStationary is passed to the modal
           }}
           onSave={(updatedParticle) => {
             selectedParticle.position = new Vector2D(updatedParticle.position.x, updatedParticle.position.y);
             selectedParticle.velocity = new Vector2D(updatedParticle.velocity.x, updatedParticle.velocity.y);
             selectedParticle.mass = updatedParticle.mass;
             selectedParticle.appliedForce = new Vector2D(updatedParticle.appliedForce.x, updatedParticle.appliedForce.y);
+            selectedParticle.isStationary = updatedParticle.isStationary;
             setSelectedParticle(null);
             draw();
           }}
