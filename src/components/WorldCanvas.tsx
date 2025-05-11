@@ -21,6 +21,8 @@ export default function WorldCanvas() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [frameTick, setFrameTick] = useState(0);
   const [selectedParticle, setSelectedParticle] = useState<Particle | null>(null);
+  const [slopeMode, setSlopeMode] = useState(false);
+  const [slopePoints, setSlopePoints] = useState<Vector2D[]>([]);
 
   const updateForce = (particle: Particle, fx: number, fy: number) => {
     particle.appliedForce.x = fx;
@@ -54,13 +56,28 @@ export default function WorldCanvas() {
     };
   }, []);
 
-  // Function to handle particle click
+  // Function to handle particle click or slope creation
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
     const clickX = e.clientX - rect.left;
     const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
+
+    if (slopeMode) {
+      const newPoint = new Vector2D(clickX, clickY);
+      setSlopePoints((prev) => {
+        const updatedPoints = [...prev, newPoint];
+        if (updatedPoints.length === 2) {
+          world.addSlope(updatedPoints[0], updatedPoints[1]);
+          setSlopeMode(false);
+          setSlopePoints([]);
+          draw();
+        }
+        return updatedPoints;
+      });
+      return;
+    }
 
     const clickedParticle = world.particles.find((p) => {
       const dx = p.position.x - clickX;
@@ -74,12 +91,24 @@ export default function WorldCanvas() {
     }
   };
 
-  // Draw all particles
+  // Draw all particles and slopes
   const draw = () => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    // Draw slopes
+    for (const slope of world.slopes) {
+      ctx.beginPath();
+      ctx.moveTo(slope.start.x, canvasHeight - slope.start.y);
+      ctx.lineTo(slope.end.x, canvasHeight - slope.end.y);
+      ctx.strokeStyle = 'blue';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Draw particles
     for (const p of world.particles) {
       const flippedY = canvasHeight - p.position.y; // Flip y-coordinate to fix coordinates system.
 
@@ -123,6 +152,30 @@ export default function WorldCanvas() {
 
   return (
     <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <button onClick={() => setIsPlaying(!isPlaying)}>
+          <img
+            src={isPlaying ? '/pause.svg' : '/play-button.svg'}
+            alt={isPlaying ? 'Pause' : 'Play'}
+            style={{ width: '24px', height: '24px' }}
+          />
+        </button>
+        <button 
+          onClick={() => setSlopeMode((prev) => !prev)}
+          style={{
+            backgroundColor: slopeMode ? 'lightblue' : 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+        >
+          <img
+            src="/slope.svg"
+            alt="Add Slope"
+            style={{ width: '24px', height: '24px' }}
+          />
+        </button>
+      </div>
       <canvas
         ref={canvasRef}
         width={canvasWidth}
@@ -288,3 +341,5 @@ export default function WorldCanvas() {
     </div>
   );
 }
+
+// 
