@@ -3,40 +3,10 @@ import { Vector2D } from './Vector2D';
 
 export class World {
   particles: Particle[] = [];
-  constraints: StringConstraint[] = [];
 
   // Add particle to the world
   addParticle(p: Particle) {
     this.particles.push(p);
-  }
-
-  // Add a new string constraint between two particles
-  addStringConstraint(p1: Particle, p2: Particle) {
-    const distance = Math.sqrt(
-      Math.pow(p2.position.x - p1.position.x, 2) +
-      Math.pow(p2.position.y - p1.position.y, 2)
-    );
-    this.constraints.push(new StringConstraint(p1, p2, distance));
-  }
-
-  // Update constraints after particle updates
-  private updateConstraints() {
-    for (const constraint of this.constraints) {
-      const dx = constraint.p2.position.x - constraint.p1.position.x;
-      const dy = constraint.p2.position.y - constraint.p1.position.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const correction = (distance - constraint.length) / 2;
-
-      if (!constraint.p1.isStationary) {
-        constraint.p1.position.x += (correction * dx) / distance;
-        constraint.p1.position.y += (correction * dy) / distance;
-      }
-
-      if (!constraint.p2.isStationary) {
-        constraint.p2.position.x -= (correction * dx) / distance;
-        constraint.p2.position.y -= (correction * dy) / distance;
-      }
-    }
   }
 
   // Run physics for each step ('time' delta dt)
@@ -56,8 +26,6 @@ export class World {
         p.correctEnergy(9.8);
       }
     }
-
-    this.updateConstraints();
 
     // Handle particle-to-particle collisions
     for (let i = 0; i < this.particles.length; i++) {
