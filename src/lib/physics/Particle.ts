@@ -7,15 +7,38 @@ export class Particle {
   forces: Vector2D[] = [];
   appliedForce: Vector2D = new Vector2D(0, 0);
   isStationary: boolean = false;
+  initialEnergy: number | null = null;
 
   constructor(x: number, y: number, vx = 0, vy = 0, mass = 1) {
     this.position = new Vector2D(x, y);
     this.velocity = new Vector2D(vx, vy);
     this.mass = mass;
+    this.initialEnergy = 0.5 * mass * (vx ** 2 + vy ** 2) + mass * 9.8 * y; // Initialize total energy
   }
 
   applyForce(force: Vector2D) {
     this.forces.push(force);
+  }
+
+  private calculateKineticEnergy(): number {
+    return 0.5 * this.mass * this.velocity.magnitudeSquared();
+  }
+
+  private calculatePotentialEnergy(gravity: number): number {
+    return this.mass * gravity * this.position.y;
+  }
+
+  correctEnergy(gravity: number, tolerance: number = 0.05) {
+    if (this.initialEnergy === null) return;
+
+    const currentKineticEnergy = this.calculateKineticEnergy();
+    const currentPotentialEnergy = this.calculatePotentialEnergy(gravity);
+    const currentTotalEnergy = currentKineticEnergy + currentPotentialEnergy;
+
+    if (Math.abs(currentTotalEnergy - this.initialEnergy) / this.initialEnergy < tolerance) {
+      const scale = Math.sqrt(this.initialEnergy / currentTotalEnergy);
+      this.velocity = this.velocity.scale(scale);
+    }
   }
 
   update(dt: number) {

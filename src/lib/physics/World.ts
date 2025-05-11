@@ -1,6 +1,5 @@
 import { Particle } from './Particle';
 import { Vector2D } from './Vector2D';
-import { StringConstraint } from './StringConstraint';
 
 export class World {
   particles: Particle[] = [];
@@ -52,6 +51,9 @@ export class World {
         const acceleration = netForce.scale(1 / p.mass);
         p.velocity = p.velocity.add(acceleration.scale(dt));
         p.position = p.position.add(p.velocity.scale(dt));
+
+        // Apply energy correction
+        p.correctEnergy(9.8);
       }
     }
 

@@ -14,7 +14,10 @@ export class Vector2D {
   scale(scalar: number): Vector2D {
     return new Vector2D(this.x * scalar, this.y * scalar);
   }
-}
 // this function multiplies a vector by a scalar
+  magnitudeSquared(): number {
+    return this.x * this.x + this.y * this.y;
+  }
+}
 
 // use conservation of linear momentum to calculate
