@@ -23,12 +23,80 @@ export default function WorldCanvas() {
   const [selectedParticle, setSelectedParticle] = useState<Particle | null>(null);
   const [slopeMode, setSlopeMode] = useState(false);
   const [slopePoints, setSlopePoints] = useState<Vector2D[]>([]);
+  const [showSlopeModal, setShowSlopeModal] = useState(false);
+  const [highlightedSlope, setHighlightedSlope] = useState<number | null>(null);
 
   const updateForce = (particle: Particle, fx: number, fy: number) => {
     particle.appliedForce.x = fx;
     particle.appliedForce.y = fy;
     draw();
   };
+
+  const handleSlopeButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (e.shiftKey) {
+      setShowSlopeModal(true);
+    } else {
+      setSlopeMode((prev) => !prev);
+    }
+  };
+
+  const handleModalSave = (start: Vector2D, end: Vector2D) => {
+    world.addSlope(start, end);
+    setShowSlopeModal(false);
+    draw();
+  };
+
+  const handleModalCancel = () => {
+    setShowSlopeModal(false);
+  };
+
+  const handleCanvasRightClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const clickX = e.clientX - rect.left;
+    const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
+
+    let foundIndex: number | null = null;
+    world.slopes.forEach((slope, index) => {
+      const dx = slope.end.x - slope.start.x;
+      const dy = slope.end.y - slope.start.y;
+      const lengthSquared = dx * dx + dy * dy;
+
+      if (lengthSquared === 0) return; // Skip degenerate slopes
+
+      const t = ((clickX - slope.start.x) * dx + (clickY - slope.start.y) * dy) / lengthSquared;
+      const clampedT = Math.max(0, Math.min(1, t));
+
+      const closestX = slope.start.x + clampedT * dx;
+      const closestY = slope.start.y + clampedT * dy;
+
+      const distanceSquared = (clickX - closestX) ** 2 + (clickY - closestY) ** 2;
+      const thresholdSquared = 10 ** 2; // Highlight threshold
+
+      if (distanceSquared < thresholdSquared) {
+        foundIndex = index;
+      }
+    });
+
+    setHighlightedSlope(foundIndex);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Delete' && highlightedSlope !== null) {
+      world.slopes.splice(highlightedSlope, 1);
+      setHighlightedSlope(null);
+      draw();
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [highlightedSlope]);
 
   // Initial setup
   useEffect(() => {
@@ -58,11 +126,36 @@ export default function WorldCanvas() {
 
   // Function to handle particle click or slope creation
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
     const clickX = e.clientX - rect.left;
     const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
+
+    let foundIndex: number | null = null;
+    world.slopes.forEach((slope, index) => {
+      const dx = slope.end.x - slope.start.x;
+      const dy = slope.end.y - slope.start.y;
+      const lengthSquared = dx * dx + dy * dy;
+
+      if (lengthSquared === 0) return; // Skip degenerate slopes
+
+      const t = ((clickX - slope.start.x) * dx + (clickY - slope.start.y) * dy) / lengthSquared;
+      const clampedT = Math.max(0, Math.min(1, t));
+
+      const closestX = slope.start.x + clampedT * dx;
+      const closestY = slope.start.y + clampedT * dy;
+
+      const distanceSquared = (clickX - closestX) ** 2 + (clickY - closestY) ** 2;
+      const thresholdSquared = 10 ** 2; // Highlight threshold
+
+      if (distanceSquared < thresholdSquared) {
+        foundIndex = index;
+      }
+    });
+
+    setHighlightedSlope(foundIndex);
 
     if (slopeMode) {
       const newPoint = new Vector2D(clickX, clickY);
@@ -99,14 +192,14 @@ export default function WorldCanvas() {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // Draw slopes
-    for (const slope of world.slopes) {
+    world.slopes.forEach((slope, index) => {
       ctx.beginPath();
       ctx.moveTo(slope.start.x, canvasHeight - slope.start.y);
       ctx.lineTo(slope.end.x, canvasHeight - slope.end.y);
-      ctx.strokeStyle = 'blue';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = index === highlightedSlope ? 'yellow' : 'blue';
+      ctx.lineWidth = index === highlightedSlope ? 4 : 3; // Increase line width for better visibility
       ctx.stroke();
-    }
+    });
 
     // Draw particles
     for (const p of world.particles) {
@@ -160,8 +253,8 @@ export default function WorldCanvas() {
             style={{ width: '24px', height: '24px' }}
           />
         </button>
-        <button 
-          onClick={() => setSlopeMode((prev) => !prev)}
+        <button
+          onClick={handleSlopeButtonClick}
           style={{
             backgroundColor: slopeMode ? 'lightblue' : 'transparent',
             border: 'none',
@@ -176,12 +269,73 @@ export default function WorldCanvas() {
           />
         </button>
       </div>
+      {showSlopeModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+            }}
+          >
+            <h3>Define Slope</h3>
+            <label>
+              Start Point (x, y):
+              <input type="number" placeholder="x" id="startX" />
+              <input type="number" placeholder="y" id="startY" />
+            </label>
+            <br />
+            <label>
+              End Point (x, y):
+              <input type="number" placeholder="x" id="endX" />
+              <input type="number" placeholder="y" id="endY" />
+            </label>
+            <br />
+            <button
+              onClick={() => {
+                const startX = parseFloat((document.getElementById('startX') as HTMLInputElement).value);
+                const startY = parseFloat((document.getElementById('startY') as HTMLInputElement).value);
+                const endX = parseFloat((document.getElementById('endX') as HTMLInputElement).value);
+                const endY = parseFloat((document.getElementById('endY') as HTMLInputElement).value);
+                handleModalSave(new Vector2D(startX, startY), new Vector2D(endX, endY));
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+              }}
+            >
+              <img
+                src="/check-mark.svg"
+                alt="Save"
+                style={{ width: '24px', height: '24px' }}
+              />
+            </button>
+            <button onClick={handleModalCancel}>Cancel</button>
+          </div>
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         width={canvasWidth}
         height={canvasHeight}
         style={{ border: '1px solid black' }}
         onClick={handleCanvasClick}
+        onContextMenu={handleCanvasRightClick}
       />
       <div style={{ marginTop: '1rem' }}>
         <button onClick={() => setIsPlaying(!isPlaying)}>
@@ -342,4 +496,5 @@ export default function WorldCanvas() {
   );
 }
 
-// 
+// shift clicking on the slope button should bring up a modal overlay that allows you to define lines with two coordinate points
+//
