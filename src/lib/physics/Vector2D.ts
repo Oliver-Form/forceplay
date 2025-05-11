@@ -19,5 +19,3 @@ export class Vector2D {
     return this.x * this.x + this.y * this.y;
   }
 }
-
-// use conservation of linear momentum to calculate
