@@ -4,6 +4,7 @@ import { Vector2D } from './Vector2D';
 export class World {
   particles: Particle[] = [];
   slopes: { start: Vector2D; end: Vector2D }[] = [];
+  ropes: { start: Particle; end: Particle }[] = [];
 
   // Add particle to the world
   addParticle(p: Particle) {
@@ -12,6 +13,10 @@ export class World {
 
   addSlope(start: Vector2D, end: Vector2D) {
     this.slopes.push({ start, end });
+  }
+
+  addRope(start: Particle, end: Particle) {
+    this.ropes.push({ start, end });
   }
 
   // Run physics for each step ('time' delta dt)
