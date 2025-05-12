@@ -25,6 +25,8 @@ export default function WorldCanvas() {
   const [slopePoints, setSlopePoints] = useState<Vector2D[]>([]);
   const [showSlopeModal, setShowSlopeModal] = useState(false);
   const [highlightedSlope, setHighlightedSlope] = useState<number | null>(null);
+  const [ropeMode, setRopeMode] = useState(false);
+  const [ropePoints, setRopePoints] = useState<Particle[]>([]);
 
   const updateForce = (particle: Particle, fx: number, fy: number) => {
     particle.appliedForce.x = fx;
@@ -38,6 +40,11 @@ export default function WorldCanvas() {
     } else {
       setSlopeMode((prev) => !prev);
     }
+  };
+
+  const handleRopeButtonClick = () => {
+    setRopeMode((prev) => !prev);
+    setRopePoints([]); // Reset rope points when toggling mode
   };
 
   const handleModalSave = (start: Vector2D, end: Vector2D) => {
@@ -133,6 +140,29 @@ export default function WorldCanvas() {
     const clickX = e.clientX - rect.left;
     const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
 
+    if (ropeMode) {
+      const clickedParticle = world.particles.find((p) => {
+        const dx = p.position.x - clickX;
+        const dy = p.position.y - clickY;
+        return Math.sqrt(dx * dx + dy * dy) <= particleRadius;
+      });
+
+      if (clickedParticle) {
+        setRopePoints((prev) => {
+          const updatedPoints = [...prev, clickedParticle];
+          if (updatedPoints.length === 2) {
+            // Connect the two particles with a red string
+            world.addRope(updatedPoints[0], updatedPoints[1]);
+            setRopeMode(false);
+            setRopePoints([]);
+            draw();
+          }
+          return updatedPoints;
+        });
+      }
+      return;
+    }
+
     let foundIndex: number | null = null;
     world.slopes.forEach((slope, index) => {
       const dx = slope.end.x - slope.start.x;
@@ -190,6 +220,16 @@ export default function WorldCanvas() {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    // Draw ropes
+    world.ropes.forEach((rope) => {
+      ctx.beginPath();
+      ctx.moveTo(rope.start.position.x, canvasHeight - rope.start.position.y);
+      ctx.lineTo(rope.end.position.x, canvasHeight - rope.end.position.y);
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
 
     // Draw slopes
     world.slopes.forEach((slope, index) => {
@@ -265,6 +305,21 @@ export default function WorldCanvas() {
           <img
             src="/slope.svg"
             alt="Add Slope"
+            style={{ width: '24px', height: '24px' }}
+          />
+        </button>
+        <button
+          onClick={handleRopeButtonClick}
+          style={{
+            backgroundColor: ropeMode ? 'lightcoral' : 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+        >
+          <img
+            src="/rope.svg"
+            alt="Add Rope"
             style={{ width: '24px', height: '24px' }}
           />
         </button>
