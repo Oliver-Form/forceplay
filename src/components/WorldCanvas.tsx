@@ -7,6 +7,7 @@ import { Particle } from '../lib/physics/Particle';
 import EditableCell from './EditableCell';
 import { Vector2D } from '../lib/physics/Vector2D';
 import ParticleModal from './ParticleModal';
+import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
 
 // declare constants
 const canvasWidth = 1900;
@@ -27,6 +28,8 @@ export default function WorldCanvas() {
   const [highlightedSlope, setHighlightedSlope] = useState<number | null>(null);
   const [ropeMode, setRopeMode] = useState(false);
   const [ropePoints, setRopePoints] = useState<Particle[]>([]);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showAttributesTable, setShowAttributesTable] = useState(false);
 
   const updateForce = (particle: Particle, fx: number, fy: number) => {
     particle.appliedForce.x = fx;
@@ -264,6 +267,46 @@ export default function WorldCanvas() {
     }
   };
 
+  const handleDownload = () => {
+    const particleData = world.particles.map((p) => ({
+      position: { x: p.position.x, y: p.position.y },
+      velocity: { x: p.velocity.x, y: p.velocity.y },
+      mass: p.mass,
+      appliedForce: { x: p.appliedForce.x, y: p.appliedForce.y },
+      isStationary: p.isStationary,
+    }));
+    const blob = new Blob([JSON.stringify(particleData, null, 2)], { type: 'application/json' });
+    saveAs(blob, 'particles.json');
+  };
+
+  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const particleData = JSON.parse(e.target?.result as string);
+        world.particles = particleData.map((data: any) => {
+          const particle = new Particle(
+            data.position.x,
+            data.position.y,
+            data.velocity.x,
+            data.velocity.y,
+            data.mass
+          );
+          particle.appliedForce = new Vector2D(data.appliedForce.x, data.appliedForce.y);
+          particle.isStationary = data.isStationary;
+          return particle;
+        });
+        draw();
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   // Animation loop
   useEffect(() => {
     let animationFrame: number;
@@ -286,13 +329,6 @@ export default function WorldCanvas() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <button onClick={() => setIsPlaying(!isPlaying)}>
-          <img
-            src={isPlaying ? '/pause.svg' : '/play-button.svg'}
-            alt={isPlaying ? 'Pause' : 'Play'}
-            style={{ width: '24px', height: '24px' }}
-          />
-        </button>
         <button
           onClick={handleSlopeButtonClick}
           style={{
@@ -323,8 +359,59 @@ export default function WorldCanvas() {
             style={{ width: '24px', height: '24px' }}
           />
         </button>
+        <button
+          onClick={() => setShowSettingsModal(true)}
+          style={{
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+        >
+          <img
+            src="/settings.svg"
+            alt="Settings"
+            style={{ width: '24px', height: '24px' }}
+          />
+        </button>
+        <button
+          onClick={handleDownload}
+          style={{
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+        >
+          <img
+            src="/download.svg"
+            alt="Download"
+            style={{ width: '24px', height: '24px' }}
+          />
+        </button>
+        <label
+          style={{
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+        >
+          <img
+            src="/upload.svg"
+            alt="Upload"
+            style={{ width: '24px', height: '24px' }}
+          />
+          <input
+            type="file"
+            accept="application/json"
+            onChange={handleUpload}
+            style={{ display: 'none' }}
+          />
+        </label>
       </div>
-      {showSlopeModal && (
+
+      {showSettingsModal && (
         <div
           style={{
             position: 'fixed',
@@ -346,44 +433,21 @@ export default function WorldCanvas() {
               boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
             }}
           >
-            <h3>Define Slope</h3>
+            <h3>Settings</h3>
             <label>
-              Start Point (x, y):
-              <input type="number" placeholder="x" id="startX" />
-              <input type="number" placeholder="y" id="startY" />
-            </label>
-            <br />
-            <label>
-              End Point (x, y):
-              <input type="number" placeholder="x" id="endX" />
-              <input type="number" placeholder="y" id="endY" />
-            </label>
-            <br />
-            <button
-              onClick={() => {
-                const startX = parseFloat((document.getElementById('startX') as HTMLInputElement).value);
-                const startY = parseFloat((document.getElementById('startY') as HTMLInputElement).value);
-                const endX = parseFloat((document.getElementById('endX') as HTMLInputElement).value);
-                const endY = parseFloat((document.getElementById('endY') as HTMLInputElement).value);
-                handleModalSave(new Vector2D(startX, startY), new Vector2D(endX, endY));
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-              }}
-            >
-              <img
-                src="/check-mark.svg"
-                alt="Save"
-                style={{ width: '24px', height: '24px' }}
+              <input
+                type="checkbox"
+                checked={showAttributesTable}
+                onChange={(e) => setShowAttributesTable(e.target.checked)}
               />
-            </button>
-            <button onClick={handleModalCancel}>Cancel</button>
+              Show Attributes Table
+            </label>
+            <br />
+            <button onClick={() => setShowSettingsModal(false)}>Close</button>
           </div>
         </div>
       )}
+
       <canvas
         ref={canvasRef}
         width={canvasWidth}
@@ -394,138 +458,140 @@ export default function WorldCanvas() {
       />
       <div style={{ marginTop: '1rem' }}>
         <button onClick={() => setIsPlaying(!isPlaying)}>
-            <img
+          <img
             src={isPlaying ? '/pause.svg' : '/play-button.svg'}
             alt={isPlaying ? 'Pause' : 'Play'}
             style={{ width: '24px', height: '24px' }}
-            />
+          />
         </button>
       </div>
 
-      <table style={{ marginTop: '2rem', borderCollapse: 'collapse', width: '100%' }}>
-        <thead>
-          <tr>
-            <th>Index</th>
-            <th>Position X</th>
-            <th>Position Y</th>
-            <th>Velocity X</th>
-            <th>Velocity Y</th>
-            <th>Mass</th>
-            <th>Fx</th>
-            <th>Fy</th>
-          </tr>
-        </thead>
-        <tbody>
-          {world.particles.map((p, index) => (
-            <tr key={index}>
-              <td>
-                {String.fromCharCode(65 + (index % 26)) + (index >= 26 ? Math.floor(index / 26) : '')}
+      {showAttributesTable && (
+        <table style={{ marginTop: '2rem', borderCollapse: 'collapse', width: '100%' }}>
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Position X</th>
+              <th>Position Y</th>
+              <th>Velocity X</th>
+              <th>Velocity Y</th>
+              <th>Mass</th>
+              <th>Fx</th>
+              <th>Fy</th>
+            </tr>
+          </thead>
+          <tbody>
+            {world.particles.map((p, index) => (
+              <tr key={index}>
+                <td>
+                  {String.fromCharCode(65 + (index % 26)) + (index >= 26 ? Math.floor(index / 26) : '')}
+                  <button
+                    onClick={() => {
+                      world.particles.splice(index, 1); // Remove the particle at the given index
+                      draw();
+                    }}
+                    style={{ marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '12px' }}
+                  >
+                    <img
+                      src="/delete-button.svg"
+                      alt="Delete"
+                      style={{ width: '16px', height: '16px' }}
+                    />
+                  </button>
+                </td>
+
+                {/* Position */}
+                <EditableCell
+                  key={`pos-x-${index}`}
+                  value={p.position.x}
+                  onConfirm={(val) => {
+                    p.position.x = val;
+                    draw();
+                  }}
+                  setIsPlaying={setIsPlaying}
+                />
+                <EditableCell
+                  key={`pos-y-${index}`}
+                  value={p.position.y} // Display y-coordinate as is
+                  onConfirm={(val) => {
+                    p.position.y = val; // Update y-coordinate directly
+                    draw();
+                  }}
+                  setIsPlaying={setIsPlaying}
+                />
+
+                {/* Velocity */}
+                <EditableCell
+                  key={`vel-x-${index}`}
+                  value={p.velocity.x}
+                  onConfirm={(val) => {
+                    p.velocity.x = val;
+                    draw();
+                  }}
+                  setIsPlaying={setIsPlaying}
+                />
+                <EditableCell
+                  key={`vel-y-${index}`}
+                  value={p.velocity.y}
+                  onConfirm={(val) => {
+                    p.velocity.y = val;
+                    draw();
+                  }}
+                  setIsPlaying={setIsPlaying}
+                />
+
+                {/* Mass */}
+                <EditableCell
+                  key={`mass-${index}`}
+                  value={p.mass}
+                  onConfirm={(val) => {
+                    p.mass = val;
+                    draw();
+                  }}
+                  setIsPlaying={setIsPlaying}
+                />
+
+                {/* Force X */}
+                <EditableCell
+                  key={`fx-${index}`}
+                  value={p.appliedForce.x}
+                  onConfirm={(val) => {
+                    updateForce(p, val, p.appliedForce.y);
+                  }}
+                  setIsPlaying={setIsPlaying}
+                />
+
+                {/* Force Y */}
+                <EditableCell
+                  key={`fy-${index}`}
+                  value={p.appliedForce.y}
+                  onConfirm={(val) => {
+                    updateForce(p, p.appliedForce.x, val);
+                  }}
+                  setIsPlaying={setIsPlaying}
+                />
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={8} style={{ textAlign: 'center', padding: '8px' }}>
                 <button
                   onClick={() => {
-                  world.particles.splice(index, 1); // Remove the particle at the given index
-                  draw();
+                    const newParticle = new Particle(canvasWidth / 2, canvasHeight / 2, 0, 0, 1);
+                    world.addParticle(newParticle);
+                    draw();
                   }}
-                  style={{ marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '12px' }}
+                  style={{ cursor: 'pointer', padding: '4px 8px', fontSize: '16px' }}
                 >
-                  <img
-                  src="/delete-button.svg"
-                  alt="Delete"
-                  style={{ width: '16px', height: '16px' }}
-                  />
+                  + Add Particle (n)
                 </button>
               </td>
-
-              {/* Position */}
-              <EditableCell
-                key={`pos-x-${index}`}
-                value={p.position.x}
-                onConfirm={(val) => {
-                  p.position.x = val;
-                  draw();
-                }}
-                setIsPlaying={setIsPlaying}
-              />
-              <EditableCell
-                key={`pos-y-${index}`}
-                value={p.position.y} // Display y-coordinate as is
-                onConfirm={(val) => {
-                  p.position.y = val; // Update y-coordinate directly
-                  draw();
-                }}
-                setIsPlaying={setIsPlaying}
-              />
-
-              {/* Velocity */}
-              <EditableCell
-                key={`vel-x-${index}`}
-                value={p.velocity.x}
-                onConfirm={(val) => {
-                  p.velocity.x = val;
-                  draw();
-                }}
-                setIsPlaying={setIsPlaying}
-              />
-              <EditableCell
-                key={`vel-y-${index}`}
-                value={p.velocity.y}
-                onConfirm={(val) => {
-                  p.velocity.y = val;
-                  draw();
-                }}
-                setIsPlaying={setIsPlaying}
-              />
-
-              {/* Mass */}
-              <EditableCell
-                key={`mass-${index}`}
-                value={p.mass}
-                onConfirm={(val) => {
-                  p.mass = val;
-                  draw();
-                }}
-                setIsPlaying={setIsPlaying}
-              />
-
-              {/* Force X */}
-              <EditableCell
-                key={`fx-${index}`}
-                value={p.appliedForce.x}
-                onConfirm={(val) => {
-                  updateForce(p, val, p.appliedForce.y);
-                }}
-                setIsPlaying={setIsPlaying}
-              />
-
-              {/* Force Y */}
-              <EditableCell
-                key={`fy-${index}`}
-                value={p.appliedForce.y}
-                onConfirm={(val) => {
-                  updateForce(p, p.appliedForce.x, val);
-                }}
-                setIsPlaying={setIsPlaying}
-              />
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan={8} style={{ textAlign: 'center', padding: '8px' }}>
-              <button
-                onClick={() => {
-                  const newParticle = new Particle(canvasWidth / 2, canvasHeight / 2, 0, 0, 1);
-                  world.addParticle(newParticle);
-                  draw();
-                }}
-                style={{ cursor: 'pointer', padding: '4px 8px', fontSize: '16px' }}
-              >
-                + Add Particle (n)
-              </button>
-            </td>
-          </tr>
-        </tfoot>
-      </table>
-      //
+          </tfoot>
+        </table>
+      )}
+
       {selectedParticle && (
         <ParticleModal
           particle={{
@@ -550,6 +616,3 @@ export default function WorldCanvas() {
     </div>
   );
 }
-
-// shift clicking on the slope button should bring up a modal overlay that allows you to define lines with two coordinate points
-//
