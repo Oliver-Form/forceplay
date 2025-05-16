@@ -12,7 +12,7 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
-  <path d="m 7.8105009,56.004255 c -1.7737501,0 -3.2137503,-1.43875 -3.2137503,-3.21375 l 0,-44.9812539 c 0,-1.7750001 1.4400002,-3.2125002 3.2137503,-3.2125002 l 44.9812531,0 c 1.775001,0 3.212501,1.4375001 3.212501,3.2125002 l 0,44.9812539 c 0,1.775 -1.4375,3.21375 -3.212501,3.21375 l -44.9812531,0 z" style="fill:#ffffff;stroke:#000000;stroke-width:0.60625005;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1"/>
   
-  <path d="m 7.5792509,52.969255 44.7200031,0 0,-9.998751 -44.7200031,9.998751" style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"/>
+  
+  <path d="m 7.5792509,52.969255 44.7200031,0 0,-9.998751 -44.7200031,9.998751" style="fill:#F0F0F0;fill-opacity:1;fill-rule:nonzero;stroke:none"/>
 </svg>

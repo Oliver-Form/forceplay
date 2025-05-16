@@ -2,8 +2,8 @@
 
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
+  --background: #1E1E2F;
+  --foreground: #F0F0F0;
 }
 
 @theme inline {
@@ -15,8 +15,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #ffffff;
-    --foreground: #000000;
+    --background: #1E1E2F;
+    --foreground: #F0F0F0;
   }
 }
 
@@ -165,3 +165,4 @@ div.cirrcle {
     -moz-box-shadow: 0 0 2px #00FFFF;
     border:1px solid #00FFFF;
 }
+

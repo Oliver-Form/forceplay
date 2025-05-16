@@ -52,7 +52,7 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
       zIndex: 1000,
     }}>
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: '#888',
         padding: '20px',
         borderRadius: '8px',
         width: '400px',
