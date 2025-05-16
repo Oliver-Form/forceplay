@@ -421,7 +421,7 @@ export default function WorldCanvas() {
     world.addParticle(newParticle);
     draw(); // trigger canvas redraw
   };
-
+  // need to see if 
   // Spawn 6 particles immediately
   for (let i = 0; i < 10; i++) {
     spawnParticle();

@@ -5,9 +5,11 @@ import { Roboto } from 'next/font/google';
 
 const roboto = Roboto({
   subsets: ['latin'],
-  weight: ['400', '500', '700'], // Optional: pick weights you need
+  weight: ['400', '500', '700'],
+  variable: '--font-roboto',
   display: 'swap',
 });
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
