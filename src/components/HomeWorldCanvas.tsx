@@ -5,7 +5,6 @@ import Link from 'next/link';
 import React, { useRef, useEffect, useState } from 'react';
 import { WorldNoGravity } from '../lib/physics/WorldNoGravity';
 import { Particle } from '../lib/physics/Particle';
-import EditableCell from './EditableCell';
 import { Vector2D } from '../lib/physics/Vector2D';
 import TypewriterText from '../components/TypewriterText';
 
@@ -38,55 +37,8 @@ export default function WorldCanvas() {
   const [highlightedSlope, setHighlightedSlope] = useState<number | null>(null);
   const [ropeMode, setRopeMode] = useState(false);
   const [ropePoints, setRopePoints] = useState<Particle[]>([]);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showAttributesTable, setShowAttributesTable] = useState(false);
   const [showCoordinateModal, setShowCoordinateModal] = useState(false);
   const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
-  const [showSubtitle, setShowSubtitle] = useState(false);
-
-  
-  const updateForce = (particle: Particle, fx: number, fy: number) => {
-    particle.appliedForce.x = fx;
-    particle.appliedForce.y = fy;
-    draw();
-  };
-
-  const handleSlopeButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (e.shiftKey) {
-      setShowCoordinateModal(true);
-    } else {
-      setSlopeMode((prev) => !prev);
-    }
-  };
-
-  const handleCoordinateModalSave = () => {
-    const { startX, startY, endX, endY } = coordinateInputs;
-    const start = new Vector2D(startX, startY);
-    const end = new Vector2D(endX, endY);
-
-    world.addSlope(start, end);
-    setShowCoordinateModal(false);
-    draw();
-  };
-
-  const handleCoordinateModalCancel = () => {
-    setShowCoordinateModal(false);
-  };
-
-  const handleRopeButtonClick = () => {
-    setRopeMode((prev) => !prev);
-    setRopePoints([]); // Reset rope points when toggling mode
-  };
-
-  const handleModalSave = (start: Vector2D, end: Vector2D) => {
-    world.addSlope(start, end);
-    setShowSlopeModal(false);
-    draw();
-  };
-
-  const handleModalCancel = () => {
-    setShowSlopeModal(false);
-  };
 
   const handleCanvasRightClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
@@ -167,117 +119,6 @@ export default function WorldCanvas() {
       draw();
     }
   }, []);
-
-  // Handle keyboard events
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'n') {
-        const vx = Math.floor(Math.random() * 100) + 1;
-        const vy = Math.floor(Math.random() * 100) + 1;
-        // don't allow particles to spawn in rectangle made from point (700, 600) to (1200, 800)
-        let x: number, y: number;
-        do {
-          x = Math.random() * (canvasWidth - 2 * particleRadius) + particleRadius;
-          y = Math.random() * (canvasHeight - 2 * particleRadius) + particleRadius;
-        } while (
-          x >= 700 && x <= 1200 &&
-          y >= 600 && y <= 800
-        );
-
-        const newParticle = new Particle(x, y, vx, vy, 1);
-        world.addParticle(newParticle);
-        draw();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  // Function to handle particle click or slope creation
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    const clickX = e.clientX - rect.left;
-    const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
-
-    if (ropeMode) {
-      const clickedParticle = world.particles.find((p) => {
-        const dx = p.position.x - clickX;
-        const dy = p.position.y - clickY;
-        return Math.sqrt(dx * dx + dy * dy) <= particleRadius;
-      });
-
-      if (clickedParticle) {
-        setRopePoints((prev) => {
-          const updatedPoints = [...prev, clickedParticle];
-          if (updatedPoints.length === 2) {
-            // Connect the two particles with a red string
-            world.addRope(updatedPoints[0], updatedPoints[1]);
-            setRopeMode(false);
-            setRopePoints([]);
-            draw();
-          }
-          return updatedPoints;
-        });
-      }
-      return;
-    }
-
-    let foundIndex: number | null = null;
-    world.slopes.forEach((slope, index) => {
-      const dx = slope.end.x - slope.start.x;
-      const dy = slope.end.y - slope.start.y;
-      const lengthSquared = dx * dx + dy * dy;
-
-      if (lengthSquared === 0) return; // Skip degenerate slopes
-
-      const t = ((clickX - slope.start.x) * dx + (clickY - slope.start.y) * dy) / lengthSquared;
-      const clampedT = Math.max(0, Math.min(1, t));
-
-      const closestX = slope.start.x + clampedT * dx;
-      const closestY = slope.start.y + clampedT * dy;
-
-      const distanceSquared = (clickX - closestX) ** 2 + (clickY - closestY) ** 2;
-      const thresholdSquared = 10 ** 2; // Highlight threshold
-
-      if (distanceSquared < thresholdSquared) {
-        foundIndex = index;
-      }
-    });
-
-    setHighlightedSlope(foundIndex);
-
-    if (slopeMode) {
-      const newPoint = new Vector2D(clickX, clickY);
-      setSlopePoints((prev) => {
-        const updatedPoints = [...prev, newPoint];
-        if (updatedPoints.length === 2) {
-          world.addSlope(updatedPoints[0], updatedPoints[1]);
-          setSlopeMode(false);
-          setSlopePoints([]);
-          draw();
-        }
-        return updatedPoints;
-      });
-      return;
-    }
-
-    const clickedParticle = world.particles.find((p) => {
-      const dx = p.position.x - clickX;
-      const dy = p.position.y - clickY;
-      return Math.sqrt(dx * dx + dy * dy) <= particleRadius;
-    });
-
-    if (clickedParticle) {
-      setIsPlaying(false); // Pause simulation
-      setSelectedParticle(clickedParticle);
-    }
-  };
 
   // Draw all particles and slopes
   const draw = () => {
@@ -404,7 +245,11 @@ export default function WorldCanvas() {
   }, [isPlaying]);
 
   useEffect(() => {
+  let count = 0;
+
   const spawnParticle = () => {
+    if (count >= 200) return;
+
     const vx = Math.floor(Math.random() * 100) + 1;
     const vy = Math.floor(Math.random() * 100) + 1;
 
@@ -419,21 +264,27 @@ export default function WorldCanvas() {
 
     const newParticle = new Particle(x, y, vx, vy, 1);
     world.addParticle(newParticle);
-    draw(); // trigger canvas redraw
+    draw();
+
+    count++;
   };
-  // need to see if 
+
   // Spawn 6 particles immediately
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 6; i++) {
     spawnParticle();
   }
 
-  // Spawn 1 particle every 2 seconds
-  const interval = setInterval(spawnParticle, 2000);
+  // Spawn 1 every 2 seconds
+  const interval = setInterval(() => {
+    if (count >= 200) {
+      clearInterval(interval);
+    } else {
+      spawnParticle();
+    }
+  }, 2000);
 
-  // Cleanup
   return () => clearInterval(interval);
 }, []);
-
 
   return (
   <div style={{ backgroundColor: '#1E1E2F' }}>
@@ -482,7 +333,6 @@ export default function WorldCanvas() {
       ref={canvasRef}
       width={canvasWidth}
       height={canvasHeight}
-      onClick={handleCanvasClick}
       onContextMenu={handleCanvasRightClick}
     />
   </div>
