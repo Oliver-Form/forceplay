@@ -30,6 +30,8 @@ export default function WorldCanvas() {
   const [ropePoints, setRopePoints] = useState<Particle[]>([]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAttributesTable, setShowAttributesTable] = useState(false);
+  const [showCoordinateModal, setShowCoordinateModal] = useState(false);
+  const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
 
   const updateForce = (particle: Particle, fx: number, fy: number) => {
     particle.appliedForce.x = fx;
@@ -39,10 +41,24 @@ export default function WorldCanvas() {
 
   const handleSlopeButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (e.shiftKey) {
-      setShowSlopeModal(true);
+      setShowCoordinateModal(true);
     } else {
       setSlopeMode((prev) => !prev);
     }
+  };
+
+  const handleCoordinateModalSave = () => {
+    const { startX, startY, endX, endY } = coordinateInputs;
+    const start = new Vector2D(startX, startY);
+    const end = new Vector2D(endX, endY);
+
+    world.addSlope(start, end);
+    setShowCoordinateModal(false);
+    draw();
+  };
+
+  const handleCoordinateModalCancel = () => {
+    setShowCoordinateModal(false);
   };
 
   const handleRopeButtonClick = () => {
@@ -275,8 +291,15 @@ export default function WorldCanvas() {
       appliedForce: { x: p.appliedForce.x, y: p.appliedForce.y },
       isStationary: p.isStationary,
     }));
-    const blob = new Blob([JSON.stringify(particleData, null, 2)], { type: 'application/json' });
-    saveAs(blob, 'particles.json');
+
+    const slopeData = world.slopes.map((slope) => ({
+      start: { x: slope.start.x, y: slope.start.y },
+      end: { x: slope.end.x, y: slope.end.y },
+    }));
+
+    const data = { particles: particleData, slopes: slopeData };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    saveAs(blob, 'world_data.json');
   };
 
   const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -286,19 +309,26 @@ export default function WorldCanvas() {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const particleData = JSON.parse(e.target?.result as string);
-        world.particles = particleData.map((data: any) => {
+        const data = JSON.parse(e.target?.result as string);
+
+        world.particles = data.particles.map((p: any) => {
           const particle = new Particle(
-            data.position.x,
-            data.position.y,
-            data.velocity.x,
-            data.velocity.y,
-            data.mass
+            p.position.x,
+            p.position.y,
+            p.velocity.x,
+            p.velocity.y,
+            p.mass
           );
-          particle.appliedForce = new Vector2D(data.appliedForce.x, data.appliedForce.y);
-          particle.isStationary = data.isStationary;
+          particle.appliedForce = new Vector2D(p.appliedForce.x, p.appliedForce.y);
+          particle.isStationary = p.isStationary;
           return particle;
         });
+
+        world.slopes = data.slopes.map((s: any) => ({
+          start: new Vector2D(s.start.x, s.start.y),
+          end: new Vector2D(s.end.x, s.end.y),
+        }));
+
         draw();
       } catch (error) {
         console.error('Error parsing JSON:', error);
@@ -444,6 +474,47 @@ export default function WorldCanvas() {
             </label>
             <br />
             <button onClick={() => setShowSettingsModal(false)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {showCoordinateModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+          }}>
+            <h3>Enter Coordinates</h3>
+            <label>
+              Start X: <input type="number" value={coordinateInputs.startX} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, startX: parseFloat(e.target.value) })} />
+            </label>
+            <br />
+            <label>
+              Start Y: <input type="number" value={coordinateInputs.startY} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, startY: parseFloat(e.target.value) })} />
+            </label>
+            <br />
+            <label>
+              End X: <input type="number" value={coordinateInputs.endX} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, endX: parseFloat(e.target.value) })} />
+            </label>
+            <br />
+            <label>
+              End Y: <input type="number" value={coordinateInputs.endY} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, endY: parseFloat(e.target.value) })} />
+            </label>
+            <br />
+            <button onClick={handleCoordinateModalSave}>Save</button>
+            <button onClick={handleCoordinateModalCancel}>Cancel</button>
           </div>
         </div>
       )}

@@ -19,3 +19,5 @@ export class Vector2D {
     return this.x * this.x + this.y * this.y;
   }
 }
+// need to pump those numbers up quite a bit. at the moment, i'm 57th, but really, i need to get to top 20 or so.
+// I'm on 3h 17m. I want to do minimum 6 hours today. I'm going to make some changes to the homepage, then watch some godfather and just write a little to kill time.

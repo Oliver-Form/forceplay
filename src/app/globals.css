@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 :root {
   --background: #ffffff;
   --foreground: #000000;
@@ -20,7 +21,147 @@
 }
 
 body {
+  background-color: #1E1E2F;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+.floating-button {
+  position: fixed;
+  bottom: 10px;
+  left: 250px;
+  width: 50px;
+  height: 50px;
+  z-index: 9999;
+  opacity: 0;
+  animation: slideIn 0.8s ease forwards;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.floating-button button {
+  width: 100%;
+  height: 100%;
+  background: #6aaae4;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: white;
+  font-size: 24px;
+  transition: transform 0.2s ease;
+}
+
+.floating-button:hover button {
+  transform: scale(1.05);
+}
+/* I need */
+/* Tooltip text */
+.floating-button::after {
+  content: attr(data-title);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);
+  transform: translateY(-50%) scale(0);
+  opacity: 0;
+  background: #333;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  box-shadow: 0 1em 2em -0.5em rgba(0, 0, 0, 0.35);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.floating-button:hover::after {
+  transform: translateY(-50%) scale(1);
+  opacity: 1;
+}
+
+/* Tooltip arrow */
+.floating-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 5px);
+  transform: translateY(-50%) scale(0);
+  border: 5px solid transparent;
+  border-left-color: #333;
+  transition: all 0.3s ease;
+  opacity: 0;
+}
+
+.floating-button:hover::before {
+  transform: translateY(-50%) scale(1);
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    left: 175px;
+  }
+  to {
+    opacity: 1;
+    left: 250px;
+  }
+}
+
+.blinking-cursor {
+  display: inline-block;
+  animation: blink 1s step-start infinite;
+}
+
+.fadein {
+  opacity: 0;
+  animation: fadeIn 1s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes greenPulse {
+from { -webkit-box-shadow: 0 0 1px #00FFFF; }
+50% {  -webkit-box-shadow: 0 0 18px #00FFFF; }
+to {-webkit-box-shadow: 0 0 9px #00FFFF; }
+}
+
+p.enter {
+  font-size: 2em;
+  position: absolute;
+  text-align: center;
+  padding-top: 44px;
+  padding-left: 61px;
+  padding-right: 61px;
+}
+
+div.cirrcle {    
+    margin: 100px auto;
+    width:200px;
+    height:200px;
+}
+
+.cirrcle {
+    -moz-border-radius: 200px/200px;
+    -webkit-border-radius: 200px 200px;
+    border-radius: 200px/200px;;
+    border:1px solid #00FFFF;
+    width:200px;
+    height:200px;
+    outline:none;
+    background-color: #02a595;
+    animation-name: greenPulse;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+}
+
+.cirrcle:hover {
+    box-shadow: 0 0 2px #00FFFF;
+    -webkit-box-shadow: 0 0 2px #00FFFF; 
+    -moz-box-shadow: 0 0 2px #00FFFF;
+    border:1px solid #00FFFF;
 }
