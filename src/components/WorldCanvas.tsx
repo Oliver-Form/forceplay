@@ -255,8 +255,8 @@ export default function WorldCanvas() {
       ctx.beginPath();
       ctx.moveTo(slope.start.x, canvasHeight - slope.start.y);
       ctx.lineTo(slope.end.x, canvasHeight - slope.end.y);
-      ctx.strokeStyle = index === highlightedSlope ? 'yellow' : 'blue';
-      ctx.lineWidth = index === highlightedSlope ? 4 : 3; // Increase line width for better visibility
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 3; // Increase line width for better visibility
       ctx.stroke();
     });
 
@@ -266,11 +266,20 @@ export default function WorldCanvas() {
 
       ctx.beginPath();
       ctx.arc(p.position.x, flippedY, particleRadius, 0, 2 * Math.PI);
-      ctx.fillStyle = 'white'; // Set circle color to white
+      
+      ctx.save();
+      ctx.shadowColor = 'cyan';
+      ctx.shadowBlur = 50;
+      ctx.fillStyle = 'cyan';
       ctx.fill();
-      ctx.strokeStyle = 'black';
+      ctx.restore();
+
+      ctx.fillStyle = 'cyan'; // Set circle color to cyan (main fill)
+      ctx.fill();
+      ctx.strokeStyle = 'cyan';
       ctx.lineWidth = 2;
       ctx.stroke();
+
 
       // Draw the label
       ctx.fillStyle = 'black'; // Set text color to black
@@ -357,7 +366,7 @@ export default function WorldCanvas() {
   }, [isPlaying]);
 
   return (
-    <div>
+    <div style={{ backgroundColor: '#1E1E2F' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <button
           onClick={handleSlopeButtonClick}
@@ -457,7 +466,7 @@ export default function WorldCanvas() {
         >
           <div
             style={{
-              backgroundColor: 'white',
+              backgroundColor: '#888',
               padding: '20px',
               borderRadius: '8px',
               boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
@@ -491,7 +500,7 @@ export default function WorldCanvas() {
           alignItems: 'center',
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: '#888',
             padding: '20px',
             borderRadius: '8px',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
@@ -513,8 +522,8 @@ export default function WorldCanvas() {
               End Y: <input type="number" value={coordinateInputs.endY} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, endY: parseFloat(e.target.value) })} />
             </label>
             <br />
-            <button onClick={handleCoordinateModalSave}>Save</button>
-            <button onClick={handleCoordinateModalCancel}>Cancel</button>
+            <button onClick={handleCoordinateModalSave}>Save </button>
+            <button onClick={handleCoordinateModalCancel}> Cancel</button>
           </div>
         </div>
       )}
@@ -523,7 +532,7 @@ export default function WorldCanvas() {
         ref={canvasRef}
         width={canvasWidth}
         height={canvasHeight}
-        style={{ border: '1px solid black' }}
+        style={{ border: '1px solid #F0F0F0' }}
         onClick={handleCanvasClick}
         onContextMenu={handleCanvasRightClick}
       />
@@ -687,3 +696,4 @@ export default function WorldCanvas() {
     </div>
   );
 }
+
