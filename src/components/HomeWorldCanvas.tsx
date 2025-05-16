@@ -10,7 +10,6 @@ import TypewriterText from '../components/TypewriterText';
 
 import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
 import homeData from '../components/home.json'; // Import the default JSON file
-import { World } from '@/lib/physics/World';
 
 interface TypewriterTextProps {
   text: string;
@@ -30,15 +29,7 @@ export default function WorldCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [frameTick, setFrameTick] = useState(0);
-  const [selectedParticle, setSelectedParticle] = useState<Particle | null>(null);
-  const [slopeMode, setSlopeMode] = useState(false);
-  const [slopePoints, setSlopePoints] = useState<Vector2D[]>([]);
-  const [showSlopeModal, setShowSlopeModal] = useState(false);
   const [highlightedSlope, setHighlightedSlope] = useState<number | null>(null);
-  const [ropeMode, setRopeMode] = useState(false);
-  const [ropePoints, setRopePoints] = useState<Particle[]>([]);
-  const [showCoordinateModal, setShowCoordinateModal] = useState(false);
-  const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
 
   const handleCanvasRightClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
