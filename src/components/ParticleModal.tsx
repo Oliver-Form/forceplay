@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Particle } from '../lib/physics/Particle';
 import { Vector2D } from '../lib/physics/Vector2D';
 
 interface ParticleModalProps {
@@ -152,3 +151,4 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
 };
 
 export default ParticleModal;
+

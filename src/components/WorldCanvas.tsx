@@ -364,7 +364,7 @@ export default function WorldCanvas() {
     animationFrame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrame);
   }, [isPlaying]);
-
+  // see now after making those changes, on any monitor i can Ctrl+Scroll to zoom in/out to find the right positioning so that the boundaries of the canvas line up with the boundaries of the display. I want it to do this automatically, so that the boundaries of the canvas align with the bounaries of the display?
   return (
     <div style={{ backgroundColor: '#1E1E2F' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -536,7 +536,7 @@ export default function WorldCanvas() {
         onClick={handleCanvasClick}
         onContextMenu={handleCanvasRightClick}
       />
-      <div style={{ marginTop: '1rem' }}>
+      <div className="flexbox-container" style={{ marginTop: '1rem' }}>
         <button onClick={() => setIsPlaying(!isPlaying)}>
           <img
             src={isPlaying ? '/pause.svg' : '/play-button.svg'}
@@ -544,6 +544,19 @@ export default function WorldCanvas() {
             style={{ width: '24px', height: '24px' }}
           />
         </button>
+      
+      <p>
+        N for new particle
+      </p>
+
+      <p>
+        Space to play/pause
+      </p>
+
+      <p>
+        Click on particle to edit its attributes
+      </p>
+      {/*Reconsider this design later*/}
       </div>
 
       {showAttributesTable && (
@@ -696,4 +709,3 @@ export default function WorldCanvas() {
     </div>
   );
 }
-
