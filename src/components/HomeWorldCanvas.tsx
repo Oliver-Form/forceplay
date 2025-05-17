@@ -135,7 +135,7 @@ export default function WorldCanvas() {
       ctx.beginPath();
       ctx.moveTo(slope.start.x, virtualHeight - slope.start.y);
       ctx.lineTo(slope.end.x, virtualHeight - slope.end.y);
-      ctx.strokeStyle = "yellow";
+      ctx.strokeStyle = "#1e1e2f";
       ctx.lineWidth = 1;
       ctx.stroke();
     });
