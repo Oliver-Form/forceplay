@@ -24,6 +24,17 @@ body {
   background-color: #1E1E2F;
   background: var(--background);
   color: var(--foreground);
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+main {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .floating-button {
@@ -37,6 +48,18 @@ body {
   animation: slideIn 0.8s ease forwards;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #1E1E2F; 
+  margin: 0;
+  padding: 0;
 }
 
 .floating-button button {
@@ -54,8 +77,8 @@ body {
 .floating-button:hover button {
   transform: scale(1.05);
 }
-/* I need */
-/* Tooltip text */
+
+
 .floating-button::after {
   content: attr(data-title);
   position: absolute;
@@ -166,3 +189,8 @@ div.cirrcle {
     border:1px solid #00FFFF;
 }
 
+.flexbox-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}

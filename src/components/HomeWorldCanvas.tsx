@@ -2,7 +2,7 @@
 
 // imports for the project
 import Link from 'next/link';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, RefObject } from 'react';
 import { WorldNoGravity } from '../lib/physics/WorldNoGravity';
 import { Particle } from '../lib/physics/Particle';
 import { Vector2D } from '../lib/physics/Vector2D';
@@ -18,8 +18,8 @@ interface TypewriterTextProps {
 }
 
 // declare constants
-const canvasWidth = 1920;
-const canvasHeight = 1030;
+const virtualWidth = 1920;
+const virtualHeight = 1030;
 const particleRadius = 10;
 
 // declare instance of World object
@@ -30,6 +30,8 @@ export default function WorldCanvas() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [frameTick, setFrameTick] = useState(0);
   const [highlightedSlope, setHighlightedSlope] = useState<number | null>(null);
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ top: 0, left: 0 });
 
   const handleCanvasRightClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
@@ -37,7 +39,7 @@ export default function WorldCanvas() {
     if (!rect) return;
 
     const clickX = e.clientX - rect.left;
-    const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
+    const clickY = virtualHeight - (e.clientY - rect.top); // Flip y-coordinate
 
     let foundIndex: number | null = null;
     world.slopes.forEach((slope, index) => {
@@ -81,7 +83,7 @@ export default function WorldCanvas() {
 
   // Initial setup
   useEffect(() => {
-    const particle = new Particle(canvasWidth / 2, 50, 0, 0, 1);
+    const particle = new Particle(virtualWidth / 2, 50, 0, 0, 1);
     world.addParticle(particle);
     draw();
   }, []);
@@ -116,13 +118,13 @@ export default function WorldCanvas() {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    ctx.clearRect(0, 0, virtualWidth, virtualHeight);
 
     // Draw ropes
     world.ropes.forEach((rope) => {
       ctx.beginPath();
-      ctx.moveTo(rope.start.position.x, canvasHeight - rope.start.position.y);
-      ctx.lineTo(rope.end.position.x, canvasHeight - rope.end.position.y);
+      ctx.moveTo(rope.start.position.x, virtualHeight - rope.start.position.y);
+      ctx.lineTo(rope.end.position.x, virtualHeight - rope.end.position.y);
       ctx.strokeStyle = 'red';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -131,16 +133,16 @@ export default function WorldCanvas() {
     // Draw slopes
     world.slopes.forEach((slope, index) => {
       ctx.beginPath();
-      ctx.moveTo(slope.start.x, canvasHeight - slope.start.y);
-      ctx.lineTo(slope.end.x, canvasHeight - slope.end.y);
-      ctx.strokeStyle = "#1E1E2F";
+      ctx.moveTo(slope.start.x, virtualHeight - slope.start.y);
+      ctx.lineTo(slope.end.x, virtualHeight - slope.end.y);
+      ctx.strokeStyle = "yellow";
       ctx.lineWidth = 1;
       ctx.stroke();
     });
 
     // Draw particles
     for (const p of world.particles) {
-      const flippedY = canvasHeight - p.position.y; // Flip y-coordinate to fix coordinates system.
+      const flippedY = virtualHeight - p.position.y; // Flip y-coordinate to fix coordinates system.
 
       ctx.beginPath();
       ctx.arc(p.position.x, flippedY, particleRadius, 0, 2 * Math.PI);
@@ -246,8 +248,8 @@ export default function WorldCanvas() {
 
     let x: number, y: number;
     do {
-      x = Math.random() * (canvasWidth - 2 * particleRadius) + particleRadius;
-      y = Math.random() * (canvasHeight - 2 * particleRadius) + particleRadius;
+      x = Math.random() * (virtualWidth - 2 * particleRadius) + particleRadius;
+      y = Math.random() * (virtualHeight - 2 * particleRadius) + particleRadius;
     } while (
       x >= 700 && x <= 1200 &&
       y >= 600 && y <= 800
@@ -261,7 +263,7 @@ export default function WorldCanvas() {
   };
 
   // Spawn 6 particles immediately
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 10; i++) {
     spawnParticle();
   }
 
@@ -277,55 +279,118 @@ export default function WorldCanvas() {
   return () => clearInterval(interval);
 }, []);
 
+// Resize handler
+
+interface Props {
+  canvasRef: RefObject<HTMLCanvasElement>;
+  virtualWidth: number; // 1920
+  virtualHeight: number; // 1030
+  handleCanvasRightClick: (e: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => void;
+}
+
+useEffect(() => {
+    const updateScale = () => {
+      const scaleX = window.innerWidth / virtualWidth;
+      const scaleY = window.innerHeight / virtualHeight;
+      const scale = Math.min(scaleX, scaleY);
+
+      const scaledWidth = virtualWidth * scale;
+      const scaledHeight = virtualHeight * scale;
+
+      const left = (window.innerWidth - scaledWidth) / 2;
+      const top = (window.innerHeight - scaledHeight) / 2;
+
+      setScale(scale);
+      setOffset({ top, left });
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [virtualWidth, virtualHeight]);
+
+
   return (
-  <div style={{ backgroundColor: '#1E1E2F' }}>
-    <div
+  <div
       style={{
-        position: 'absolute',
-        top: '223px',
-        left: '495px',
-        display: 'flex',
-        alignItems: 'flex-start', // aligns icon to top of text block
-        zIndex: 1000,
+        backgroundColor: '#1E1E2F',
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+        position: 'relative',
       }}
     >
-      <img
-        className="floating-button"
-        data-title="Icon"
-        src="icon.png"
-        alt="Label or icon"
+      <div
         style={{
-          top: '205px',
-          width: '207px',
-          height: '207px',
-          marginRight: '24px',
+          width: virtualWidth,
+          height: virtualHeight,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          position: 'absolute',
+          top: offset.top,
+          left: offset.left,
         }}
-      />
+      >
+        <div className="wrapper">
+          <div style={{ width: '100%', height: '100%' }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: '223px',
+                left: '495px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                zIndex: 1000,
+              }}
+            >
+              <img
+                className="floating-button"
+                data-title="Icon"
+                src="icon.png"
+                alt="Label or icon"
+                style={{
+                  top: '205px',
+                  width: '207px',
+                  height: '207px',
+                  marginRight: '24px',
+                }}
+              />
 
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <TypewriterText
-          text="Forceplay"
-          speed={20}
-          className="text-white text-7xl font-mono"
-        />
-        
-        <p className="text-gray-300 text-2xl font-mono mt-4 fadein">
-          A simple, interactive physics sandbox to visualise mechanics problems.
-        </p>
-        <Link href="/sandbox">
-        <div className="cirrcle absolute top-[200px] left-[350px] pt-6 text-[#F0F0F0]">
-            <p className="enter">Enter</p>
-      </div>
-      </Link>
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <TypewriterText
+                  text="Forceplay"
+                  speed={20}
+                  className="text-white text-7xl font-mono"
+                />
+                <p className="text-gray-300 text-2xl font-mono mt-4 fadein">
+                  A simple, interactive physics sandbox to visualise mechanics problems.
+                </p>
+                <Link href="/sandbox">
+                  <div className="cirrcle absolute top-[200px] left-[350px] pt-6 text-[#F0F0F0]">
+                    <p className="enter">Enter</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+
+            <canvas
+              ref={canvasRef}
+              width={virtualWidth}
+              height={virtualHeight}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: virtualWidth,
+                height: virtualHeight,
+              }}
+              onContextMenu={handleCanvasRightClick}
+            />
+          </div>
+        </div>
       </div>
     </div>
-
-    <canvas
-      ref={canvasRef}
-      width={canvasWidth}
-      height={canvasHeight}
-      onContextMenu={handleCanvasRightClick}
-    />
-  </div>
 );
-}
+} 
+
+// man i've spent five hours centering a div

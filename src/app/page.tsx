@@ -8,8 +8,10 @@ const roboto = Roboto({
 
 export default function Home() {
   return (
+    <div className="wrapper">
     <main className={roboto.className} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <HomeWorldCanvas />
     </main>
+    </div>
   );
 }
