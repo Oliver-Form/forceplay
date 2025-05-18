@@ -29,6 +29,7 @@ export default function WorldCanvas() {
   const [ropeMode, setRopeMode] = useState(false);
   const [ropePoints, setRopePoints] = useState<Particle[]>([]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isInverted, setIsInverted] = useState(false);
   const [showAttributesTable, setShowAttributesTable] = useState(false);
   const [showCoordinateModal, setShowCoordinateModal] = useState(false);
   const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
@@ -346,13 +347,64 @@ export default function WorldCanvas() {
     reader.readAsText(file);
   };
 
+  // History for inversion playback
+  type Snapshot = {
+    particles: {
+      position: { x: number; y: number };
+      velocity: { x: number; y: number };
+      mass: number;
+      appliedForce: { x: number; y: number };
+      isStationary: boolean;
+    }[];
+    slopes: { start: Vector2D; end: Vector2D }[];
+    ropes: { start: Particle; end: Particle }[];
+  };
+
+  const historyRef = useRef<Snapshot[]>([]);
+  const MAX_HISTORY = 1000;
+
   // Animation loop
   useEffect(() => {
     let animationFrame: number;
 
     const loop = () => {
       if (isPlaying) {
-        world.step(1 / 30); // faster sim
+        if (isInverted) {
+          // Play backwards using history
+          if (historyRef.current.length > 0) {
+            const snap = historyRef.current.pop()!;
+            // Restore particle states
+            world.particles.forEach((p, i) => {
+              const data = snap.particles[i];
+              p.position.x = data.position.x;
+              p.position.y = data.position.y;
+              p.velocity.x = data.velocity.x;
+              p.velocity.y = data.velocity.y;
+              p.appliedForce.x = data.appliedForce.x;
+              p.appliedForce.y = data.appliedForce.y;
+              p.mass = data.mass;
+              p.isStationary = data.isStationary;
+            });
+            // Restore slopes
+            world.slopes = snap.slopes.map(s => ({ start: new Vector2D(s.start.x, s.start.y), end: new Vector2D(s.end.x, s.end.y) }));
+          }
+        } else {
+          // Record current state for potential inversion
+          const snap: Snapshot = {
+            particles: world.particles.map(p => ({
+              position: { x: p.position.x, y: p.position.y },
+              velocity: { x: p.velocity.x, y: p.velocity.y },
+              mass: p.mass,
+              appliedForce: { x: p.appliedForce.x, y: p.appliedForce.y },
+              isStationary: p.isStationary,
+            })),
+            slopes: world.slopes.map(s => ({ start: s.start, end: s.end })),
+            ropes: world.ropes.map(r => ({ start: r.start, end: r.end })),
+          };
+          historyRef.current.push(snap);
+          if (historyRef.current.length > MAX_HISTORY) historyRef.current.shift();
+          world.step(1 / 30); // faster sim
+        }
         draw();
       }
 
@@ -481,6 +533,10 @@ export default function WorldCanvas() {
               />
               Show Attributes Table
             </label>
+            <br />
+            <button onClick={() => setIsInverted(prev => !prev)} style={{ marginTop: '8px', padding: '6px 12px', cursor: 'pointer' }}>
+              Inversion: {isInverted ? 'On' : 'Off'}
+            </button>
             <br />
             <button onClick={() => setShowSettingsModal(false)}>Close</button>
           </div>
