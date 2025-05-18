@@ -8,11 +8,18 @@ export class Particle {
   appliedForce: Vector2D = new Vector2D(0, 0);
   isStationary: boolean = false;
   initialEnergy: number | null = null;
+  _fxColor?: { fill: string; glow: string };
+  _phase?: number;
+  _isHighlight?: boolean;
+  _z?: number; // Simulated depth for deep-field effect
+  _trail?: Array<{ x: number; y: number }>;
+  radius: number;
 
-  constructor(x: number, y: number, vx = 0, vy = 0, mass = 1) {
+  constructor(x: number, y: number, vx = 0, vy = 0, mass = 1, radius = 10) {
     this.position = new Vector2D(x, y);
     this.velocity = new Vector2D(vx, vy);
     this.mass = mass;
+    this.radius = radius;
     this.initialEnergy = 0.5 * mass * (vx ** 2 + vy ** 2) + mass * 9.8 * y; // Initialize total energy
   }
 
@@ -70,3 +77,4 @@ export class Particle {
     console.log('Forces cleared after update');
   }
 }
+

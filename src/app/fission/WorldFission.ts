@@ -1,5 +1,5 @@
-  import { Particle } from './Particle';
-  import { Vector2D } from './Vector2D';
+import { Particle } from '../../lib/physics/Particle';
+import { Vector2D } from '../../lib/physics/Vector2D';
 
   export class WorldNoGravity {
     particles: Particle[] = [];
@@ -32,9 +32,9 @@
           // Apply energy correction
           p.correctEnergy(0);
 
-          // Check for collisions with slopes
-          for (const slope of this.slopes) {
-            const dx = slope.end.x - slope.start.x;
+        // Check for collisions with slopes
+        for (const slope of this.slopes) {
+          const dx = slope.end.x - slope.start.x;
             const dy = slope.end.y - slope.start.y;
             const lengthSquared = dx * dx + dy * dy;
 
@@ -47,7 +47,7 @@
             const closestY = slope.start.y + clampedT * dy;
 
             const distanceSquared = (p.position.x - closestX) ** 2 + (p.position.y - closestY) ** 2;
-            const radiusSquared = 10 ** 2; // Particle radius squared
+            const radiusSquared = p.radius ** 2; // Use per-particle radius
 
             if (distanceSquared < radiusSquared) {
               const normalX = p.position.x - closestX;
@@ -58,7 +58,6 @@
 
               const nx = normalX / normalLength;
               const ny = normalY / normalLength;
-
               const relativeVelocityX = p.velocity.x;
               const relativeVelocityY = p.velocity.y;
               const dotProduct = relativeVelocityX * nx + relativeVelocityY * ny;
@@ -71,7 +70,7 @@
                 p.velocity.y += impulse * ny;
 
                 // Resolve overlap
-                const overlap = 10 - Math.sqrt(distanceSquared);
+                const overlap = p.radius - Math.sqrt(distanceSquared);
                 p.position.x += overlap * nx;
                 p.position.y += overlap * ny;
               }
@@ -88,7 +87,7 @@
           const dx = p2.position.x - p1.position.x;
           const dy = p2.position.y - p1.position.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          const minDistance = 20;
+          const minDistance = p1.radius + p2.radius;
 
           if (distance < minDistance) {
             const overlap = minDistance - distance;
@@ -132,11 +131,12 @@
         }
       }
 
-      const r = 10;
+      // Use per-particle radius for boundary checks
       const maxX = 1920;
       const maxY = 1030;
 
       for (const p of this.particles) {
+        const r = p.radius;
         if (p.position.x - r < 0) {
           p.position.x = r;
           p.velocity.x *= -1;
@@ -158,3 +158,9 @@
     }
   }
 
+// Helper for color (for future rendering, if needed)
+export function getParticleColor(p: Particle) {
+  return p._fxColor || { fill: 'rgba(70, 110, 180, 0.7)', glow: 'rgba(70, 110, 180, 0.18)' };
+}
+
+// Ta

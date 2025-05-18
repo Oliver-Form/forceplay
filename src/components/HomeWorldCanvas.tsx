@@ -393,4 +393,3 @@ useEffect(() => {
 );
 } 
 
-// man i've spent five hours centering a div
