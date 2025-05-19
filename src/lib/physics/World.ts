@@ -15,7 +15,7 @@ import { Particle } from './Particle';
 
     particles: Particle[] = [];
     slopes: { start: Vector2D; end: Vector2D }[] = [];
-    ropes: { start: Particle; end: Particle }[] = [];
+    ropes: { start: Particle; end: Particle; length: number }[] = [];
 
     /**
      * Update restitution coefficient, clamped to [0,1]
@@ -34,7 +34,10 @@ import { Particle } from './Particle';
     }
 
     addRope(start: Particle, end: Particle) {
-      this.ropes.push({ start, end });
+      const dx = end.position.x - start.position.x;
+      const dy = end.position.y - start.position.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      this.ropes.push({ start, end, length });
     }
 
     // Run physics for each step ('time' delta dt)
@@ -172,6 +175,45 @@ import { Particle } from './Particle';
         if (p.position.y + r > maxY) {
           p.position.y = maxY - r;
           p.velocity.y *= -this.restitution;
+        }
+      }
+
+      // Apply rope constraints
+      for (const rope of this.ropes) {
+        const p1 = rope.start;
+        const p2 = rope.end;
+        const dx = p2.position.x - p1.position.x;
+        const dy = p2.position.y - p1.position.y;
+        const currentLength = Math.sqrt(dx * dx + dy * dy);
+        if (currentLength === 0) continue;
+        const nx = dx / currentLength;
+        const ny = dy / currentLength;
+        const diff = currentLength - rope.length;
+        if (diff === 0) continue;
+        if (p1.isStationary && !p2.isStationary) {
+          p2.position.x -= diff * nx;
+          p2.position.y -= diff * ny;
+          const relVel = p2.velocity.x * nx + p2.velocity.y * ny;
+          p2.velocity.x -= relVel * nx;
+          p2.velocity.y -= relVel * ny;
+        } else if (!p1.isStationary && p2.isStationary) {
+          p1.position.x += diff * nx;
+          p1.position.y += diff * ny;
+          const relVel = p1.velocity.x * nx + p1.velocity.y * ny;
+          p1.velocity.x -= relVel * nx;
+          p1.velocity.y -= relVel * ny;
+        } else if (!p1.isStationary && !p2.isStationary) {
+          const half = diff / 2;
+          p1.position.x += half * nx;
+          p1.position.y += half * ny;
+          p2.position.x -= half * nx;
+          p2.position.y -= half * ny;
+          const relVel = (p2.velocity.x - p1.velocity.x) * nx + (p2.velocity.y - p1.velocity.y) * ny;
+          const impulse = relVel / 2;
+          p1.velocity.x += impulse * nx;
+          p1.velocity.y += impulse * ny;
+          p2.velocity.x -= impulse * nx;
+          p2.velocity.y -= impulse * ny;
         }
       }
     }

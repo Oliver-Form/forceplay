@@ -173,7 +173,13 @@ export default function WorldCanvas() {
           const updatedPoints = [...prev, clickedParticle];
           if (updatedPoints.length === 2) {
             // Connect the two particles with a red string
-            world.addRope(updatedPoints[0], updatedPoints[1]);
+            // Only allow pendulum: one stationary and one non-stationary
+            const [p1, p2] = updatedPoints;
+            if ((p1.isStationary && !p2.isStationary) || (!p1.isStationary && p2.isStationary)) {
+              world.addRope(p1, p2);
+            } else {
+              alert('Pendulums must connect a stationary and a non-stationary particle');
+            }
             setRopeMode(false);
             setRopePoints([]);
             draw();
