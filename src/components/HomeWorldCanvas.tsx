@@ -289,6 +289,16 @@ interface Props {
 }
 
 useEffect(() => {
+  const handleSpace = (e: KeyboardEvent) => {
+    if (e.code === 'Enter') {
+      window.location.href = '/sandbox';
+    }
+  };
+  window.addEventListener('keydown', handleSpace);
+  return () => window.removeEventListener('keydown', handleSpace);
+}, []);
+
+useEffect(() => {
     const updateScale = () => {
       const scaleX = window.innerWidth / virtualWidth;
       const scaleY = window.innerHeight / virtualHeight;
@@ -393,4 +403,3 @@ useEffect(() => {
 );
 } 
 
-// 
