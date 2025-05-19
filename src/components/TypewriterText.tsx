@@ -11,18 +11,31 @@ export default function TypewriterText({ text, speed = 50, className = '', onCom
   const [displayedText, setDisplayedText] = useState('');
 
   useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      setDisplayedText(prev => prev + text.charAt(index));
-      index++;
-
-      if (index >= text.length) {
-        clearInterval(interval);
-        onComplete?.(); // trigger callback
+    let isCancelled = false;
+    let timeout: ReturnType<typeof setTimeout>;
+    // reset display and handle empty text
+    setDisplayedText('');
+    if (text === '') {
+      onComplete?.();
+      return;
+    }
+    let current = 0;
+    const tick = () => {
+      if (isCancelled) return;
+      current++;
+      // always slice to avoid stale char concatenation
+      setDisplayedText(text.slice(0, current));
+      if (current < text.length) {
+        timeout = setTimeout(tick, speed);
+      } else {
+        onComplete?.();
       }
-    }, speed);
-
-    return () => clearInterval(interval);
+    };
+    timeout = setTimeout(tick, speed);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeout);
+    };
   }, [text, speed, onComplete]);
 
   return (
