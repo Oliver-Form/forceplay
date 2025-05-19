@@ -369,7 +369,7 @@ useEffect(() => {
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <TypewriterText
                   text="Forceplay"
-                  speed={20}
+                  speed={25}
                   className="text-white text-7xl font-mono"
                 />
                 <p className="text-gray-300 text-2xl font-mono mt-4 fadein">

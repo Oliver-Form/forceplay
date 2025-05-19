@@ -31,6 +31,7 @@ export default function WorldCanvas() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isInverted, setIsInverted] = useState(false);
   const [showAttributesTable, setShowAttributesTable] = useState(false);
+  const [restitutionValue, setRestitutionValue] = useState(world.restitution);
   const [showCoordinateModal, setShowCoordinateModal] = useState(false);
   const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
 
@@ -538,6 +539,23 @@ export default function WorldCanvas() {
               Inversion: {isInverted ? 'On' : 'Off'}
             </button>
             <br />
+            <label>
+              Restitution ({restitutionValue.toFixed(2)}):
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={restitutionValue}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  setRestitutionValue(v);
+                  world.setRestitution(v);
+                  draw();
+                }}
+              />
+            </label>
+            <br />
             <button onClick={() => setShowSettingsModal(false)}>Close</button>
           </div>
         </div>
@@ -765,3 +783,4 @@ export default function WorldCanvas() {
     </div>
   );
 }
+

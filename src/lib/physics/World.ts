@@ -1,10 +1,28 @@
-  import { Particle } from './Particle';
+import { Particle } from './Particle';
   import { Vector2D } from './Vector2D';
 
+  // Coefficient of restitution, default bounce factor between 0 and 1
+  // Removed global const e in favor of instance property
+
   export class World {
+    restitution: number;
+    /**
+     * Create a new World with given restitution coefficient (0-1)
+     */
+    constructor(restitution = 0.88) {
+      this.restitution = restitution;
+    }
+
     particles: Particle[] = [];
     slopes: { start: Vector2D; end: Vector2D }[] = [];
     ropes: { start: Particle; end: Particle }[] = [];
+
+    /**
+     * Update restitution coefficient, clamped to [0,1]
+     */
+    setRestitution(value: number) {
+      this.restitution = Math.max(0, Math.min(1, value));
+    }
 
     // Add particle to the world
     addParticle(p: Particle) {
@@ -112,7 +130,8 @@
               continue;
             }
 
-            const e = 1;
+            // use restitution property for particle collisions
+            const e = this.restitution;
             const mass1 = p1.isStationary ? Infinity : p1.mass;
             const mass2 = p2.isStationary ? Infinity : p2.mass;
             const impulse = (-(1 + e) * dotProduct) / (1 / mass1 + 1 / mass2);
@@ -139,22 +158,22 @@
       for (const p of this.particles) {
         if (p.position.x - r < 0) {
           p.position.x = r;
-          p.velocity.x *= -0.88;
+          p.velocity.x *= -this.restitution;
         }
         if (p.position.x + r > maxX) {
           p.position.x = maxX - r;
-          p.velocity.x *= -0.88;
+          p.velocity.x *= -this.restitution;
         }
 
         if (p.position.y - r < 0) {
           p.position.y = r;
-          p.velocity.y *= -0.88;
+          p.velocity.y *= -this.restitution;
         }
         if (p.position.y + r > maxY) {
           p.position.y = maxY - r;
-          p.velocity.y *= -0.88;
+          p.velocity.y *= -this.restitution;
         }
       }
     }
   }
-  
+
