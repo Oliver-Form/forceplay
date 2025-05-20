@@ -313,8 +313,11 @@ export default function WorldCanvas() {
       start: { x: slope.start.x, y: slope.start.y },
       end: { x: slope.end.x, y: slope.end.y },
     }));
-
-    const data = { particles: particleData, slopes: slopeData };
+    const ropeData = world.ropes.map((r) => ({
+      startIndex: world.particles.indexOf(r.start),
+      endIndex: world.particles.indexOf(r.end),
+    }));
+    const data = { particles: particleData, slopes: slopeData, ropes: ropeData };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     saveAs(blob, 'world_data.json');
   };
@@ -345,7 +348,15 @@ export default function WorldCanvas() {
           start: new Vector2D(s.start.x, s.start.y),
           end: new Vector2D(s.end.x, s.end.y),
         }));
-
+        // Load rope connections if present
+        world.ropes = [];
+        if (data.ropes) {
+          data.ropes.forEach((r: any) => {
+            const p1 = world.particles[r.startIndex];
+            const p2 = world.particles[r.endIndex];
+            if (p1 && p2) world.addRope(p1, p2);
+          });
+        }
         draw();
       } catch (error) {
         console.error('Error parsing JSON:', error);
