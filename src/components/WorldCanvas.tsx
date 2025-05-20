@@ -18,6 +18,16 @@ const particleRadius = 10;
 const world = new World();
 
 export default function WorldCanvas() {
+  // Scaling logic similar to HomeWorldCanvas
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ top: 0, left: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Content natural dimensions for scaling
+  const sidebarWidth = 300;
+  const bottomHeight = 100; // approx height of bottom controls
+  const contentWidth = sidebarWidth + canvasWidth;
+  const contentHeight = canvasHeight + bottomHeight;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [frameTick, setFrameTick] = useState(0);
@@ -431,369 +441,428 @@ export default function WorldCanvas() {
     animationFrame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrame);
   }, [isPlaying]);
+
+  useEffect(() => {
+    const updateScale = () => {
+      const scaleX = window.innerWidth / contentWidth;
+      const scaleY = window.innerHeight / contentHeight;
+      const scale = Math.min(scaleX, scaleY);
+
+      const scaledWidth = contentWidth * scale;
+      const scaledHeight = contentHeight * scale;
+
+      const left = (window.innerWidth - scaledWidth) / 2;
+      const top = (window.innerHeight - scaledHeight) / 2;
+
+      setScale(scale);
+      setOffset({ top, left });
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [contentWidth, contentHeight]);
+
   // see now after making those changes, on any monitor i can Ctrl+Scroll to zoom in/out to find the right positioning so that the boundaries of the canvas line up with the boundaries of the display. I want it to do this automatically, so that the boundaries of the canvas align with the bounaries of the display?
   return (
-    <div style={{ backgroundColor: '#1E1E2F' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <button
-          onClick={handleSlopeButtonClick}
-          style={{
-            backgroundColor: slopeMode ? 'lightblue' : 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-          }}
-        >
-          <img
-            src="/slope.svg"
-            alt="Add Slope"
-            style={{ width: '24px', height: '24px' }}
-          />
-        </button>
-        <button
-          onClick={handleRopeButtonClick}
-          style={{
-            backgroundColor: ropeMode ? 'lightcoral' : 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-          }}
-        >
-          <img
-            src="/rope.svg"
-            alt="Add Rope"
-            style={{ width: '24px', height: '24px' }}
-          />
-        </button>
-        <button
-          onClick={() => setShowSettingsModal(true)}
-          style={{
-            backgroundColor: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-          }}
-        >
-          <img
-            src="/settings.svg"
-            alt="Settings"
-            style={{ width: '24px', height: '24px' }}
-          />
-        </button>
-        <button
-          onClick={handleDownload}
-          style={{
-            backgroundColor: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-          }}
-        >
-          <img
-            src="/download.svg"
-            alt="Download"
-            style={{ width: '24px', height: '24px' }}
-          />
-        </button>
-        <label
-          style={{
-            backgroundColor: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-          }}
-        >
-          <img
-            src="/upload.svg"
-            alt="Upload"
-            style={{ width: '24px', height: '24px' }}
-          />
-          <input
-            type="file"
-            accept="application/json"
-            onChange={handleUpload}
-            style={{ display: 'none' }}
-          />
-        </label>
-      </div>
+    <div
+      ref={containerRef}
+      style={{
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+        position: 'absolute',
+        top: offset.top,
+        left: offset.left,
+        width: contentWidth,
+        height: contentHeight,
+      }}
+    >
+      {/* Content area: sidebar and canvas */}
+      <div style={{ display: 'flex', height: canvasHeight }}>
+        {/* Side panel with two resizable boxes */}
+        <div style={{ display: 'flex', flexDirection: 'column', width: sidebarWidth, padding: '8px', boxSizing: 'border-box', height: canvasHeight }}>
+          <div style={{ height: '50%', backgroundColor: '#2D2D3F', marginBottom: '8px', resize: 'vertical', overflow: 'auto' }}>
+            {/* Box 1: customizable content goes here */}
+          </div>
+          <div style={{ height: '50%', backgroundColor: '#2D2D3F', resize: 'vertical', overflow: 'auto' }}>
+            {/* Box 2: customizable content goes here */}
+          </div>
+        </div>
+        {/* Main canvas and upper controls panel */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', boxSizing: 'border-box' }}>
+          <div style={{ backgroundColor: '#1E1E2F', padding: '8px', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <button
+                  onClick={handleSlopeButtonClick}
+                  style={{
+                    backgroundColor: slopeMode ? 'lightblue' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                  }}
+                >
+                  <img
+                    src="/slope.svg"
+                    alt="Add Slope"
+                    style={{ width: '24px', height: '24px' }}
+                  />
+                </button>
+                <button
+                  onClick={handleRopeButtonClick}
+                  style={{
+                    backgroundColor: ropeMode ? 'lightcoral' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                  }}
+                >
+                  <img
+                    src="/rope.svg"
+                    alt="Add Rope"
+                    style={{ width: '24px', height: '24px' }}
+                  />
+                </button>
+              </div>
+              <div>
+                <button
+                  onClick={() => setShowSettingsModal(true)}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                  }}
+                >
+                  <img
+                    src="/settings.svg"
+                    alt="Settings"
+                    style={{ width: '24px', height: '24px' }}
+                  />
+                </button>
+                <button
+                  onClick={handleDownload}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                  }}
+                >
+                  <img
+                    src="/download.svg"
+                    alt="Download"
+                    style={{ width: '24px', height: '24px' }}
+                  />
+                </button>
+                <label
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                  }}
+                >
+                  <img
+                    src="/upload.svg"
+                    alt="Upload"
+                    style={{ width: '24px', height: '24px' }}
+                  />
+                  <input
+                    type="file"
+                    accept="application/json"
+                    onChange={handleUpload}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
 
-      {showSettingsModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: '#888',
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-            }}
-          >
-            <h3>Settings</h3>
-            <label>
-              <input
-                type="checkbox"
-                checked={showAttributesTable}
-                onChange={(e) => setShowAttributesTable(e.target.checked)}
-              />
-              Show Attributes Table
-            </label>
-            <br />
-            <button onClick={() => setIsInverted(prev => !prev)} style={{ marginTop: '8px', padding: '6px 12px', cursor: 'pointer' }}>
-              Inversion: {isInverted ? 'On' : 'Off'}
-            </button>
-            <br />
-            <label>
-              Restitution ({restitutionValue.toFixed(2)}):
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={restitutionValue}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value);
-                  setRestitutionValue(v);
-                  world.setRestitution(v);
-                  draw();
+          {showSettingsModal && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: '#888',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
                 }}
-              />
-            </label>
-            <br />
-            <button onClick={() => setShowSettingsModal(false)}>Close</button>
-          </div>
-        </div>
-      )}
-
-      {showCoordinateModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-          <div style={{
-            backgroundColor: '#888',
-            padding: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-          }}>
-            <h3>Enter Coordinates</h3>
-            <label>
-              Start X: <input type="number" value={coordinateInputs.startX} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, startX: parseFloat(e.target.value) })} />
-            </label>
-            <br />
-            <label>
-              Start Y: <input type="number" value={coordinateInputs.startY} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, startY: parseFloat(e.target.value) })} />
-            </label>
-            <br />
-            <label>
-              End X: <input type="number" value={coordinateInputs.endX} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, endX: parseFloat(e.target.value) })} />
-            </label>
-            <br />
-            <label>
-              End Y: <input type="number" value={coordinateInputs.endY} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, endY: parseFloat(e.target.value) })} />
-            </label>
-            <br />
-            <button onClick={handleCoordinateModalSave}>Save </button>
-            <button onClick={handleCoordinateModalCancel}> Cancel</button>
-          </div>
-        </div>
-      )}
-
-      <canvas
-        ref={canvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
-        style={{ border: '1px solid #F0F0F0' }}
-        onClick={handleCanvasClick}
-        onContextMenu={handleCanvasRightClick}
-      />
-      <div className="flexbox-container" style={{ marginTop: '1rem' }}>
-        <button onClick={() => setIsPlaying(!isPlaying)}>
-          <img
-            src={isPlaying ? '/pause.svg' : '/play-button.svg'}
-            alt={isPlaying ? 'Pause' : 'Play'}
-            style={{ width: '24px', height: '24px' }}
-          />
-        </button>
-      
-      <p>
-        N for new particle
-      </p>
-
-      <p>
-        Space to play/pause
-      </p>
-
-      <p>
-        Click on particle to edit its attributes
-      </p>
-      {/*Reconsider this design later*/}
-      </div>
-
-      {showAttributesTable && (
-        <table style={{ marginTop: '2rem', borderCollapse: 'collapse', width: '100%' }}>
-          <thead>
-            <tr>
-              <th>Index</th>
-              <th>Position X</th>
-              <th>Position Y</th>
-              <th>Velocity X</th>
-              <th>Velocity Y</th>
-              <th>Mass</th>
-              <th>Fx</th>
-              <th>Fy</th>
-            </tr>
-          </thead>
-          <tbody>
-            {world.particles.map((p, index) => (
-              <tr key={index}>
-                <td>
-                  {String.fromCharCode(65 + (index % 26)) + (index >= 26 ? Math.floor(index / 26) : '')}
-                  <button
-                    onClick={() => {
-                      world.particles.splice(index, 1); // Remove the particle at the given index
+              >
+                <h3>Settings</h3>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={showAttributesTable}
+                    onChange={(e) => setShowAttributesTable(e.target.checked)}
+                  />
+                  Show Attributes Table
+                </label>
+                <br />
+                <button onClick={() => setIsInverted(prev => !prev)} style={{ marginTop: '8px', padding: '6px 12px', cursor: 'pointer' }}>
+                  Inversion: {isInverted ? 'On' : 'Off'}
+                </button>
+                <br />
+                <label>
+                  Restitution ({restitutionValue.toFixed(2)}):
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={restitutionValue}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      setRestitutionValue(v);
+                      world.setRestitution(v);
                       draw();
                     }}
-                    style={{ marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '12px' }}
+                  />
+                </label>
+                <br />
+                <button onClick={() => setShowSettingsModal(false)}>Close</button>
+              </div>
+            </div>
+          )}
+
+          {showCoordinateModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <div style={{
+                backgroundColor: '#888',
+                padding: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+              }}>
+                <h3>Enter Coordinates</h3>
+                <label>
+                  Start X: <input type="number" value={coordinateInputs.startX} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, startX: parseFloat(e.target.value) })} />
+                </label>
+                <br />
+                <label>
+                  Start Y: <input type="number" value={coordinateInputs.startY} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, startY: parseFloat(e.target.value) })} />
+                </label>
+                <br />
+                <label>
+                  End X: <input type="number" value={coordinateInputs.endX} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, endX: parseFloat(e.target.value) })} />
+                </label>
+                <br />
+                <label>
+                  End Y: <input type="number" value={coordinateInputs.endY} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, endY: parseFloat(e.target.value) })} />
+                </label>
+                <br />
+                <button onClick={handleCoordinateModalSave}>Save </button>
+                <button onClick={handleCoordinateModalCancel}> Cancel</button>
+              </div>
+            </div>
+          )}
+
+          <canvas
+            ref={canvasRef}
+            width={canvasWidth}
+            height={canvasHeight}
+            style={{ border: '1px solid #F0F0F0' }}
+            onClick={handleCanvasClick}
+            onContextMenu={handleCanvasRightClick}
+          />
+
+          {/* usage instructions */}
+          <div
+            className="flexbox-container"
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '32px',
+              margin: '8px auto',
+              width: canvasWidth,
+            }}
+          >
+            <button onClick={() => setIsPlaying(!isPlaying)}>
+              <img
+                src={isPlaying ? '/pause.svg' : '/play-button.svg'}
+                alt={isPlaying ? 'Pause' : 'Play'}
+                style={{ width: '24px', height: '24px' }}
+              />
+            </button>
+            <p>N for new particle</p>
+            <p>Space to play/pause</p>
+            <p>Click on particle to edit its attributes</p>
+          </div>
+        </div>
+      </div>
+      {/* Bottom controls and tables: play button, attributes table, selectedModal */}
+      <div style={{ padding: '8px' }}>
+        {showAttributesTable && (
+          <table style={{ marginTop: '2rem', borderCollapse: 'collapse', width: '100%' }}>
+            <thead>
+              <tr>
+                <th>Index</th>
+                <th>Position X</th>
+                <th>Position Y</th>
+                <th>Velocity X</th>
+                <th>Velocity Y</th>
+                <th>Mass</th>
+                <th>Fx</th>
+                <th>Fy</th>
+              </tr>
+            </thead>
+            <tbody>
+              {world.particles.map((p, index) => (
+                <tr key={index}>
+                  <td>
+                    {String.fromCharCode(65 + (index % 26)) + (index >= 26 ? Math.floor(index / 26) : '')}
+                    <button
+                      onClick={() => {
+                        world.particles.splice(index, 1); // Remove the particle at the given index
+                        draw();
+                      }}
+                      style={{ marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '12px' }}
+                    >
+                      <img
+                        src="/delete-button.svg"
+                        alt="Delete"
+                        style={{ width: '16px', height: '16px' }}
+                      />
+                    </button>
+                  </td>
+
+                  {/* Position */}
+                  <EditableCell
+                    key={`pos-x-${index}`}
+                    value={p.position.x}
+                    onConfirm={(val) => {
+                      p.position.x = val;
+                      draw();
+                    }}
+                    setIsPlaying={setIsPlaying}
+                  />
+                  <EditableCell
+                    key={`pos-y-${index}`}
+                    value={p.position.y} // Display y-coordinate as is
+                    onConfirm={(val) => {
+                      p.position.y = val; // Update y-coordinate directly
+                      draw();
+                    }}
+                    setIsPlaying={setIsPlaying}
+                  />
+
+                  {/* Velocity */}
+                  <EditableCell
+                    key={`vel-x-${index}`}
+                    value={p.velocity.x}
+                    onConfirm={(val) => {
+                      p.velocity.x = val;
+                      draw();
+                    }}
+                    setIsPlaying={setIsPlaying}
+                  />
+                  <EditableCell
+                    key={`vel-y-${index}`}
+                    value={p.velocity.y}
+                    onConfirm={(val) => {
+                      p.velocity.y = val;
+                      draw();
+                    }}
+                    setIsPlaying={setIsPlaying}
+                  />
+
+                  {/* Mass */}
+                  <EditableCell
+                    key={`mass-${index}`}
+                    value={p.mass}
+                    onConfirm={(val) => {
+                      p.mass = val;
+                      draw();
+                    }}
+                    setIsPlaying={setIsPlaying}
+                  />
+
+                  {/* Force X */}
+                  <EditableCell
+                    key={`fx-${index}`}
+                    value={p.appliedForce.x}
+                    onConfirm={(val) => {
+                      updateForce(p, val, p.appliedForce.y);
+                    }}
+                    setIsPlaying={setIsPlaying}
+                  />
+
+                  {/* Force Y */}
+                  <EditableCell
+                    key={`fy-${index}`}
+                    value={p.appliedForce.y}
+                    onConfirm={(val) => {
+                      updateForce(p, p.appliedForce.x, val);
+                    }}
+                    setIsPlaying={setIsPlaying}
+                  />
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '8px' }}>
+                  <button
+                    onClick={() => {
+                      const newParticle = new Particle(canvasWidth / 2, canvasHeight / 2, 0, 0, 1);
+                      world.addParticle(newParticle);
+                      draw();
+                    }}
+                    style={{ cursor: 'pointer', padding: '4px 8px', fontSize: '16px' }}
                   >
-                    <img
-                      src="/delete-button.svg"
-                      alt="Delete"
-                      style={{ width: '16px', height: '16px' }}
-                    />
+                    + Add Particle (n)
                   </button>
                 </td>
-
-                {/* Position */}
-                <EditableCell
-                  key={`pos-x-${index}`}
-                  value={p.position.x}
-                  onConfirm={(val) => {
-                    p.position.x = val;
-                    draw();
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
-                <EditableCell
-                  key={`pos-y-${index}`}
-                  value={p.position.y} // Display y-coordinate as is
-                  onConfirm={(val) => {
-                    p.position.y = val; // Update y-coordinate directly
-                    draw();
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
-
-                {/* Velocity */}
-                <EditableCell
-                  key={`vel-x-${index}`}
-                  value={p.velocity.x}
-                  onConfirm={(val) => {
-                    p.velocity.x = val;
-                    draw();
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
-                <EditableCell
-                  key={`vel-y-${index}`}
-                  value={p.velocity.y}
-                  onConfirm={(val) => {
-                    p.velocity.y = val;
-                    draw();
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
-
-                {/* Mass */}
-                <EditableCell
-                  key={`mass-${index}`}
-                  value={p.mass}
-                  onConfirm={(val) => {
-                    p.mass = val;
-                    draw();
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
-
-                {/* Force X */}
-                <EditableCell
-                  key={`fx-${index}`}
-                  value={p.appliedForce.x}
-                  onConfirm={(val) => {
-                    updateForce(p, val, p.appliedForce.y);
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
-
-                {/* Force Y */}
-                <EditableCell
-                  key={`fy-${index}`}
-                  value={p.appliedForce.y}
-                  onConfirm={(val) => {
-                    updateForce(p, p.appliedForce.x, val);
-                  }}
-                  setIsPlaying={setIsPlaying}
-                />
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={8} style={{ textAlign: 'center', padding: '8px' }}>
-                <button
-                  onClick={() => {
-                    const newParticle = new Particle(canvasWidth / 2, canvasHeight / 2, 0, 0, 1);
-                    world.addParticle(newParticle);
-                    draw();
-                  }}
-                  style={{ cursor: 'pointer', padding: '4px 8px', fontSize: '16px' }}
-                >
-                  + Add Particle (n)
-                </button>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      )}
+            </tfoot>
+          </table>
+        )}
 
-      {selectedParticle && (
-        <ParticleModal
-          particle={{
-            position: selectedParticle.position,
-            velocity: selectedParticle.velocity,
-            mass: selectedParticle.mass,
-            appliedForce: selectedParticle.appliedForce,
-            isStationary: selectedParticle.isStationary, // Ensure isStationary is passed to the modal
-          }}
-          onSave={(updatedParticle) => {
-            selectedParticle.position = new Vector2D(updatedParticle.position.x, updatedParticle.position.y);
-            selectedParticle.velocity = new Vector2D(updatedParticle.velocity.x, updatedParticle.velocity.y);
-            selectedParticle.mass = updatedParticle.mass;
-            selectedParticle.appliedForce = new Vector2D(updatedParticle.appliedForce.x, updatedParticle.appliedForce.y);
-            selectedParticle.isStationary = updatedParticle.isStationary;
-            setSelectedParticle(null);
-            draw();
-          }}
-          onCancel={() => setSelectedParticle(null)}
-        />
-      )}
+        {selectedParticle && (
+          <ParticleModal
+            particle={{
+              position: selectedParticle.position,
+              velocity: selectedParticle.velocity,
+              mass: selectedParticle.mass,
+              appliedForce: selectedParticle.appliedForce,
+              isStationary: selectedParticle.isStationary, // Ensure isStationary is passed to the modal
+            }}
+            onSave={(updatedParticle) => {
+              selectedParticle.position = new Vector2D(updatedParticle.position.x, updatedParticle.position.y);
+              selectedParticle.velocity = new Vector2D(updatedParticle.velocity.x, updatedParticle.velocity.y);
+              selectedParticle.mass = updatedParticle.mass;
+              selectedParticle.appliedForce = new Vector2D(updatedParticle.appliedForce.x, updatedParticle.appliedForce.y);
+              selectedParticle.isStationary = updatedParticle.isStationary;
+              setSelectedParticle(null);
+              draw();
+            }}
+            onCancel={() => setSelectedParticle(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }
+
