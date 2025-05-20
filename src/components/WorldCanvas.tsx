@@ -169,23 +169,20 @@ export default function WorldCanvas() {
       });
 
       if (clickedParticle) {
-        setRopePoints((prev) => {
-          const updatedPoints = [...prev, clickedParticle];
-          if (updatedPoints.length === 2) {
-            // Connect the two particles with a red string
-            // Only allow pendulum: one stationary and one non-stationary
-            const [p1, p2] = updatedPoints;
-            if ((p1.isStationary && !p2.isStationary) || (!p1.isStationary && p2.isStationary)) {
-              world.addRope(p1, p2);
-            } else {
-              alert('Pendulums must connect a stationary and a non-stationary particle');
-            }
-            setRopeMode(false);
-            setRopePoints([]);
-            draw();
+        if (ropePoints.length === 0) {
+          setRopePoints([clickedParticle]);
+        } else {
+          const p1 = ropePoints[0];
+          const p2 = clickedParticle;
+          if ((p1.isStationary && !p2.isStationary) || (!p1.isStationary && p2.isStationary)) {
+            world.addRope(p1, p2);
+          } else {
+            alert('Pendulums must connect a stationary and a non-stationary particle');
           }
-          return updatedPoints;
-        });
+          setRopeMode(false);
+          setRopePoints([]);
+          draw();
+        }
       }
       return;
     }
@@ -800,4 +797,3 @@ export default function WorldCanvas() {
     </div>
   );
 }
-
