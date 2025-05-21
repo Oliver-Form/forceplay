@@ -547,31 +547,31 @@ export default function WorldCanvas() {
             {editingData ? (
               <div>
                 <h3>Edit Particle</h3>
-                <label>Position X: <input type="number" value={editingData.position.x} onChange={e => {
+                <label>Position X: <input type="number" defaultValue={editingData.position.x} onBlur={e => {
                     const v = parseFloat(e.target.value);
                     setEditingData({ ...editingData, position: { ...editingData.position, x: isNaN(v) ? 0 : v } });
                   }} /></label><br />
-                <label>Position Y: <input type="number" value={editingData.position.y} onChange={e => {
+                <label>Position Y: <input type="number" defaultValue={editingData.position.y} onBlur={e => {
                     const v = parseFloat(e.target.value);
                     setEditingData({ ...editingData, position: { ...editingData.position, y: isNaN(v) ? 0 : v } });
                   }} /></label><br />
-                <label>Velocity X: <input type="number" value={editingData.velocity.x} onChange={e => {
+                <label>Velocity X: <input type="number" defaultValue={editingData.velocity.x} onBlur={e => {
                     const v = parseFloat(e.target.value);
                     setEditingData({ ...editingData, velocity: { ...editingData.velocity, x: isNaN(v) ? 0 : v } });
                   }} /></label><br />
-                <label>Velocity Y: <input type="number" value={editingData.velocity.y} onChange={e => {
+                <label>Velocity Y: <input type="number" defaultValue={editingData.velocity.y} onBlur={e => {
                     const v = parseFloat(e.target.value);
                     setEditingData({ ...editingData, velocity: { ...editingData.velocity, y: isNaN(v) ? 0 : v } });
                   }} /></label><br />
-                <label>Mass: <input type="number" value={editingData.mass} onChange={e => {
+                <label>Mass: <input type="number" defaultValue={editingData.mass} onBlur={e => {
                     const v = parseFloat(e.target.value);
                     setEditingData({ ...editingData, mass: isNaN(v) ? 0 : v });
                   }} /></label><br />
-                <label>Force X: <input type="number" value={editingData.appliedForce.x} onChange={e => {
+                <label>Force X: <input type="number" defaultValue={editingData.appliedForce.x} onBlur={e => {
                     const v = parseFloat(e.target.value);
                     setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, x: isNaN(v) ? 0 : v } });
                   }} /></label><br />
-                <label>Force Y: <input type="number" value={editingData.appliedForce.y} onChange={e => {
+                <label>Force Y: <input type="number" defaultValue={editingData.appliedForce.y} onBlur={e => {
                     const v = parseFloat(e.target.value);
                     setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, y: isNaN(v) ? 0 : v } });
                   }} /></label><br />
@@ -770,6 +770,7 @@ export default function WorldCanvas() {
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
               }}>
                 <h3>Enter Coordinates</h3>
+                {/*allow user to enter -0 so they can type in negatives*/}
                 <label>
                   Start X: <input type="number" value={coordinateInputs.startX} onChange={(e) => setCoordinateInputs({ ...coordinateInputs, startX: parseFloat(e.target.value) })} />
                 </label>
@@ -957,4 +958,3 @@ export default function WorldCanvas() {
     </div>
   );
 }
-

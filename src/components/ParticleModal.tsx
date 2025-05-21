@@ -134,7 +134,7 @@ const ParticleModal: React.FC<ParticleModalProps> = ({ particle, onSave, onCance
             <input
               type="checkbox"
               checked={isStationary}
-              onChange={(e) => setIsStationary(e.target.checked)}
+              onChange={(e) => setIsStationary(e.target.checked)} 
             />
           </label>
         </div>
