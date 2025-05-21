@@ -1006,4 +1006,4 @@ export default function WorldCanvas() {
     </div>
   );
 }
- 
+
