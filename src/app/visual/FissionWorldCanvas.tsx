@@ -7,7 +7,6 @@ import { Particle } from '../../lib/physics/Particle';
 import { Vector2D } from '../../lib/physics/Vector2D';
 
 import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
-import fissionData from './fission.json'; // Import the default JSON file
 
 interface TypewriterTextProps {
   text: string;
@@ -171,33 +170,6 @@ export default function WorldCanvas() {
     draw();
   }, []);
 
-  // Load default attributes from home.json
-  useEffect(() => {
-    if (fissionData) {
-      world.particles = fissionData.particles.map((p: any) => {
-        const color = getRandomParticleColor();
-        const particle = new Particle(
-          p.position.x,
-          p.position.y,
-          p.velocity.x,
-          p.velocity.y,
-          p.mass,
-          p.radius !== undefined ? p.radius : getRandomRadius()
-        );
-        particle._fxColor = { fill: color.fill, glow: color.glow };
-        particle._phase = Math.random() * Math.PI * 2;
-        particle._isHighlight = !!color.highlight;
-        return particle;
-      });
-
-      world.slopes = fissionData.slopes.map((s: any) => ({
-        start: new Vector2D(s.start.x, s.start.y),
-        end: new Vector2D(s.end.x, s.end.y),
-      }));
-
-      draw();
-    }
-  }, []);
 
   // Utility to get random radius
   function getRandomRadius() {
