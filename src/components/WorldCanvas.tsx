@@ -547,56 +547,104 @@ export default function WorldCanvas() {
             {editingData ? (
               <div>
                 <h3>Edit Particle</h3>
-                <label>Position X: <input type="number" defaultValue={editingData.position.x} onBlur={e => {
-                    const v = parseFloat(e.target.value);
-                    setEditingData({ ...editingData, position: { ...editingData.position, x: isNaN(v) ? 0 : v } });
-                  }} /></label><br />
-                <label>Position Y: <input type="number" defaultValue={editingData.position.y} onBlur={e => {
-                    const v = parseFloat(e.target.value);
-                    setEditingData({ ...editingData, position: { ...editingData.position, y: isNaN(v) ? 0 : v } });
-                  }} /></label><br />
-                <label>Velocity X: <input type="number" defaultValue={editingData.velocity.x} onBlur={e => {
-                    const v = parseFloat(e.target.value);
-                    setEditingData({ ...editingData, velocity: { ...editingData.velocity, x: isNaN(v) ? 0 : v } });
-                  }} /></label><br />
-                <label>Velocity Y: <input type="number" defaultValue={editingData.velocity.y} onBlur={e => {
-                    const v = parseFloat(e.target.value);
-                    setEditingData({ ...editingData, velocity: { ...editingData.velocity, y: isNaN(v) ? 0 : v } });
-                  }} /></label><br />
-                <label>Mass: <input type="number" defaultValue={editingData.mass} onBlur={e => {
-                    const v = parseFloat(e.target.value);
-                    setEditingData({ ...editingData, mass: isNaN(v) ? 0 : v });
-                  }} /></label><br />
-                <label>Force X: <input type="number" defaultValue={editingData.appliedForce.x} onBlur={e => {
-                    const v = parseFloat(e.target.value);
-                    setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, x: isNaN(v) ? 0 : v } });
-                  }} /></label><br />
-                <label>Force Y: <input type="number" defaultValue={editingData.appliedForce.y} onBlur={e => {
-                    const v = parseFloat(e.target.value);
-                    setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, y: isNaN(v) ? 0 : v } });
-                  }} /></label><br />
-                <label>Stationary: <input type="checkbox" checked={editingData.isStationary} onChange={e => setEditingData({ ...editingData, isStationary: e.target.checked })} /></label><br />
-                <button onClick={() => {
-                  if (selectedParticle && editingData) {
-                    selectedParticle.position.x = editingData.position.x;
-                    selectedParticle.position.y = editingData.position.y;
-                    selectedParticle.velocity.x = editingData.velocity.x;
-                    selectedParticle.velocity.y = editingData.velocity.y;
-                    selectedParticle.mass = editingData.mass;
-                    selectedParticle.appliedForce.x = editingData.appliedForce.x;
-                    selectedParticle.appliedForce.y = editingData.appliedForce.y;
-                    selectedParticle.isStationary = editingData.isStationary;
-                    setSelectedParticle(null);
-                    draw();
-                  }
-                }}>
-                  <img src="/check-mark.svg" alt="Save" style={{ width: '24px', height: '24px' }} />
-                </button>
-                <button onClick={() => setSelectedParticle(null)}>Cancel</button>
+                {/* Position X */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ flex: 1 }}>Position X:
+                    <input type="number" defaultValue={editingData.position.x} onBlur={e => {
+                      const v = parseFloat(e.target.value);
+                      setEditingData({ ...editingData, position: { ...editingData.position, x: isNaN(v) ? 0 : v } });
+                    }} />
+                  </label>
+                  <button type="button" onClick={() => { if (selectedParticle && editingData) { selectedParticle.position.x = editingData.position.x; draw(); } }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img src="/check-mark.svg" alt="Save X" style={{ width: '24px', height: '24px' }} />
+                  </button>
+                </div>
+                {/* Position Y */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ flex: 1 }}>Position Y:
+                    <input type="number" defaultValue={editingData.position.y} onBlur={e => {
+                      const v = parseFloat(e.target.value);
+                      setEditingData({ ...editingData, position: { ...editingData.position, y: isNaN(v) ? 0 : v } });
+                    }} />
+                  </label>
+                  <button type="button" onClick={() => { if (selectedParticle && editingData) { selectedParticle.position.y = editingData.position.y; draw(); } }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img src="/check-mark.svg" alt="Save Y" style={{ width: '24px', height: '24px' }} />
+                  </button>
+                </div>
+                {/* Velocity X */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ flex: 1 }}>Velocity X:
+                    <input type="number" defaultValue={editingData.velocity.x} onBlur={e => {
+                      const v = parseFloat(e.target.value);
+                      setEditingData({ ...editingData, velocity: { ...editingData.velocity, x: isNaN(v) ? 0 : v } });
+                    }} />
+                  </label>
+                  <button type="button" onClick={() => { if (selectedParticle && editingData) { selectedParticle.velocity.x = editingData.velocity.x; draw(); } }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img src="/check-mark.svg" alt="Save VX" style={{ width: '24px', height: '24px' }} />
+                  </button>
+                </div>
+                {/* Velocity Y */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ flex: 1 }}>Velocity Y:
+                    <input type="number" defaultValue={editingData.velocity.y} onBlur={e => {
+                      const v = parseFloat(e.target.value);
+                      setEditingData({ ...editingData, velocity: { ...editingData.velocity, y: isNaN(v) ? 0 : v } });
+                    }} />
+                  </label>
+                  <button type="button" onClick={() => { if (selectedParticle && editingData) { selectedParticle.velocity.y = editingData.velocity.y; draw(); } }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img src="/check-mark.svg" alt="Save VY" style={{ width: '24px', height: '24px' }} />
+                  </button>
+                </div>
+                {/* Mass */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ flex: 1 }}>Mass:
+                    <input type="number" defaultValue={editingData.mass} onBlur={e => {
+                      const v = parseFloat(e.target.value);
+                      setEditingData({ ...editingData, mass: isNaN(v) ? 0 : v });
+                    }} />
+                  </label>
+                  <button type="button" onClick={() => { if (selectedParticle && editingData) { selectedParticle.mass = editingData.mass; draw(); } }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img src="/check-mark.svg" alt="Save Mass" style={{ width: '24px', height: '24px' }} />
+                  </button>
+                </div>
+                {/* Force X */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ flex: 1 }}>Force X:
+                    <input type="number" defaultValue={editingData.appliedForce.x} onBlur={e => {
+                      const v = parseFloat(e.target.value);
+                      setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, x: isNaN(v) ? 0 : v } });
+                    }} />
+                  </label>
+                  <button type="button" onClick={() => { if (selectedParticle && editingData) { selectedParticle.appliedForce.x = editingData.appliedForce.x; draw(); } }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img src="/check-mark.svg" alt="Save Fx" style={{ width: '24px', height: '24px' }} />
+                  </button>
+                </div>
+                {/* Force Y */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ flex: 1 }}>Force Y:
+                    <input type="number" defaultValue={editingData.appliedForce.y} onBlur={e => {
+                      const v = parseFloat(e.target.value);
+                      setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, y: isNaN(v) ? 0 : v } });
+                    }} />
+                  </label>
+                  <button type="button" onClick={() => { if (selectedParticle && editingData) { selectedParticle.appliedForce.y = editingData.appliedForce.y; draw(); } }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img src="/check-mark.svg" alt="Save Fy" style={{ width: '24px', height: '24px' }} />
+                  </button>
+                </div>
+                {/* Stationary */}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ flex: 1 }}>Stationary:
+                    <input type="checkbox" checked={editingData.isStationary} onChange={e => setEditingData({ ...editingData, isStationary: e.target.checked })} />
+                  </label>
+                  <button type="button" onClick={() => { if (selectedParticle && editingData) { selectedParticle.isStationary = editingData.isStationary; draw(); } }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img src="/check-mark.svg" alt="Save Stationary" style={{ width: '24px', height: '24px' }} />
+                  </button>
+                </div>
+                <button type="button" onClick={() => setSelectedParticle(null)} style={{ marginTop: '8px' }}>Close</button>
               </div>
-            ) : (
-              <p>Select a particle to edit</p>
-            )}
+             ) : (
+               <p>Select a particle to edit</p>
+             )}
           </div>
           <div style={{ flex: 1, backgroundColor: '#2D2D3F', resize: 'vertical', overflow: 'auto', minHeight: 0 }}>
             {/* Box 2: customizable content goes here */}
@@ -958,3 +1006,4 @@ export default function WorldCanvas() {
     </div>
   );
 }
+ 
