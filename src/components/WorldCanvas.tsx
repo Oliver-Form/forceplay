@@ -16,10 +16,42 @@ const particleRadius = 10;
 // declare instance of World object
 const world = new World();
 
-export default function WorldCanvas() {
+interface WorldCanvasProps { initialData?: any | null; }
+export default function WorldCanvas({ initialData }: WorldCanvasProps) {
   // Scaling logic similar to HomeWorldCanvas
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ top: 0, left: 0 });
+  // Load example data into world on initialData change
+  useEffect(() => {
+    if (initialData) {
+      try {
+        // Load particles
+        world.particles = initialData.particles.map((p: any) => {
+          const particle = new Particle(p.position.x, p.position.y, p.velocity.x, p.velocity.y, p.mass);
+          particle.appliedForce = new Vector2D(p.appliedForce.x, p.appliedForce.y);
+          particle.isStationary = p.isStationary;
+          return particle;
+        });
+        // Load slopes
+        world.slopes = initialData.slopes.map((s: any) => ({
+          start: new Vector2D(s.start.x, s.start.y),
+          end: new Vector2D(s.end.x, s.end.y),
+        }));
+        // Load ropes
+        world.ropes = [];
+        if (initialData.ropes) {
+          initialData.ropes.forEach((r: any) => {
+            const p1 = world.particles[r.startIndex];
+            const p2 = world.particles[r.endIndex];
+            if (p1 && p2) world.addRope(p1, p2);
+          });
+        }
+        draw();
+      } catch (err) {
+        console.error('Error loading initial data', err);
+      }
+    }
+  }, [initialData]);
   // Form state for inline particle editing
   const [particleForm, setParticleForm] = useState<{
     position: { x: number; y: number };
@@ -1007,3 +1039,4 @@ export default function WorldCanvas() {
   );
 }
 
+//
