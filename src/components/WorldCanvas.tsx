@@ -532,13 +532,34 @@ export default function WorldCanvas() {
             {editingData ? (
               <div>
                 <h3>Edit Particle</h3>
-                <label>Position X: <input type="number" value={editingData.position.x} onChange={e => setEditingData({ ...editingData, position: { ...editingData.position, x: parseFloat(e.target.value) } })} /></label><br />
-                <label>Position Y: <input type="number" value={editingData.position.y} onChange={e => setEditingData({ ...editingData, position: { ...editingData.position, y: parseFloat(e.target.value) } })} /></label><br />
-                <label>Velocity X: <input type="number" value={editingData.velocity.x} onChange={e => setEditingData({ ...editingData, velocity: { ...editingData.velocity, x: parseFloat(e.target.value) } })} /></label><br />
-                <label>Velocity Y: <input type="number" value={editingData.velocity.y} onChange={e => setEditingData({ ...editingData, velocity: { ...editingData.velocity, y: parseFloat(e.target.value) } })} /></label><br />
-                <label>Mass: <input type="number" value={editingData.mass} onChange={e => setEditingData({ ...editingData, mass: parseFloat(e.target.value) })} /></label><br />
-                <label>Force X: <input type="number" value={editingData.appliedForce.x} onChange={e => setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, x: parseFloat(e.target.value) } })} /></label><br />
-                <label>Force Y: <input type="number" value={editingData.appliedForce.y} onChange={e => setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, y: parseFloat(e.target.value) } })} /></label><br />
+                <label>Position X: <input type="number" value={editingData.position.x} onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setEditingData({ ...editingData, position: { ...editingData.position, x: isNaN(v) ? 0 : v } });
+                  }} /></label><br />
+                <label>Position Y: <input type="number" value={editingData.position.y} onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setEditingData({ ...editingData, position: { ...editingData.position, y: isNaN(v) ? 0 : v } });
+                  }} /></label><br />
+                <label>Velocity X: <input type="number" value={editingData.velocity.x} onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setEditingData({ ...editingData, velocity: { ...editingData.velocity, x: isNaN(v) ? 0 : v } });
+                  }} /></label><br />
+                <label>Velocity Y: <input type="number" value={editingData.velocity.y} onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setEditingData({ ...editingData, velocity: { ...editingData.velocity, y: isNaN(v) ? 0 : v } });
+                  }} /></label><br />
+                <label>Mass: <input type="number" value={editingData.mass} onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setEditingData({ ...editingData, mass: isNaN(v) ? 0 : v });
+                  }} /></label><br />
+                <label>Force X: <input type="number" value={editingData.appliedForce.x} onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, x: isNaN(v) ? 0 : v } });
+                  }} /></label><br />
+                <label>Force Y: <input type="number" value={editingData.appliedForce.y} onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, y: isNaN(v) ? 0 : v } });
+                  }} /></label><br />
                 <label>Stationary: <input type="checkbox" checked={editingData.isStationary} onChange={e => setEditingData({ ...editingData, isStationary: e.target.checked })} /></label><br />
                 <button onClick={() => {
                   if (selectedParticle && editingData) {
