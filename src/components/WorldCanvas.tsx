@@ -496,6 +496,21 @@ export default function WorldCanvas() {
     window.addEventListener('resize', updateScale);
     return () => window.removeEventListener('resize', updateScale);
   }, [contentWidth, contentHeight]);
+  // Redraw canvas when page visibility changes or window gains focus
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        draw();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', draw);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', draw);
+    };
+  }, []);
+
   // Sync selectedParticle to editingData when a particle is clicked
   useEffect(() => {
     if (selectedParticle) {
