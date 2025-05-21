@@ -6,7 +6,6 @@ import { World } from '../lib/physics/World';
 import { Particle } from '../lib/physics/Particle';
 import EditableCell from './EditableCell';
 import { Vector2D } from '../lib/physics/Vector2D';
-import ParticleModal from './ParticleModal';
 import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
 
 // declare constants
@@ -21,6 +20,14 @@ export default function WorldCanvas() {
   // Scaling logic similar to HomeWorldCanvas
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ top: 0, left: 0 });
+  // Form state for inline particle editing
+  const [particleForm, setParticleForm] = useState<{
+    position: { x: number; y: number };
+    velocity: { x: number; y: number };
+    mass: number;
+    appliedForce: { x: number; y: number };
+    isStationary: boolean;
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   // Content natural dimensions for scaling
   const sidebarWidth = 300;
@@ -44,6 +51,15 @@ export default function WorldCanvas() {
   const [restitutionValue, setRestitutionValue] = useState(world.restitution);
   const [showCoordinateModal, setShowCoordinateModal] = useState(false);
   const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
+  const [heritageError, setHeritageError] = useState<boolean>(false);
+  // Editing data for inline particle attribute form
+  const [editingData, setEditingData] = useState<{
+    position: { x: number; y: number };
+    velocity: { x: number; y: number };
+    mass: number;
+    appliedForce: { x: number; y: number };
+    isStationary: boolean;
+  } | null>(null);
 
   const updateForce = (particle: Particle, fx: number, fy: number) => {
     particle.appliedForce.x = fx;
@@ -93,8 +109,11 @@ export default function WorldCanvas() {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const clickX = e.clientX - rect.left;
-    const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
+    // Convert screen coords to logical canvas coords by accounting for scale
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+    const clickX = clientX / scale;
+    const clickY = canvasHeight - (clientY / scale); // Flip y-coordinate
 
     let foundIndex: number | null = null;
     world.slopes.forEach((slope, index) => {
@@ -168,8 +187,11 @@ export default function WorldCanvas() {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const clickX = e.clientX - rect.left;
-    const clickY = canvasHeight - (e.clientY - rect.top); // Flip y-coordinate
+    // Convert screen coords to logical canvas coords by accounting for scale
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+    const clickX = clientX / scale;
+    const clickY = canvasHeight - (clientY / scale); // Flip y-coordinate
 
     if (ropeMode) {
       const clickedParticle = world.particles.find((p) => {
@@ -245,6 +267,18 @@ export default function WorldCanvas() {
     if (clickedParticle) {
       setIsPlaying(false); // Pause simulation
       setSelectedParticle(clickedParticle);
+      // Initialize inline form with current attributes
+      setParticleForm({
+        position: { x: clickedParticle.position.x, y: clickedParticle.position.y },
+        velocity: { x: clickedParticle.velocity.x, y: clickedParticle.velocity.y },
+        mass: clickedParticle.mass,
+        appliedForce: { x: clickedParticle.appliedForce.x, y: clickedParticle.appliedForce.y },
+        isStationary: clickedParticle.isStationary,
+      });
+    } else {
+      // Clear form when clicking elsewhere
+      setSelectedParticle(null);
+      setParticleForm(null);
     }
   };
 
@@ -449,10 +483,10 @@ export default function WorldCanvas() {
       const scale = Math.min(scaleX, scaleY);
 
       const scaledWidth = contentWidth * scale;
-      const scaledHeight = contentHeight * scale;
+      // const scaledHeight = contentHeight * scale; // no longer needed for top calculation
 
       const left = (window.innerWidth - scaledWidth) / 2;
-      const top = (window.innerHeight - scaledHeight) / 2;
+      const top = 0;
 
       setScale(scale);
       setOffset({ top, left });
@@ -462,8 +496,21 @@ export default function WorldCanvas() {
     window.addEventListener('resize', updateScale);
     return () => window.removeEventListener('resize', updateScale);
   }, [contentWidth, contentHeight]);
+  // Sync selectedParticle to editingData when a particle is clicked
+  useEffect(() => {
+    if (selectedParticle) {
+      setEditingData({
+        position: { x: selectedParticle.position.x, y: selectedParticle.position.y },
+        velocity: { x: selectedParticle.velocity.x, y: selectedParticle.velocity.y },
+        mass: selectedParticle.mass,
+        appliedForce: { x: selectedParticle.appliedForce.x, y: selectedParticle.appliedForce.y },
+        isStationary: selectedParticle.isStationary,
+      });
+    } else {
+      setEditingData(null);
+    }
+  }, [selectedParticle]);
 
-  // see now after making those changes, on any monitor i can Ctrl+Scroll to zoom in/out to find the right positioning so that the boundaries of the canvas line up with the boundaries of the display. I want it to do this automatically, so that the boundaries of the canvas align with the bounaries of the display?
   return (
     <div
       ref={containerRef}
@@ -474,17 +521,48 @@ export default function WorldCanvas() {
         top: offset.top,
         left: offset.left,
         width: contentWidth,
-        height: contentHeight,
+        height: '100vh',
       }}
     >
       {/* Content area: sidebar and canvas */}
-      <div style={{ display: 'flex', height: canvasHeight }}>
+      <div style={{ display: 'flex', height: '100vh' }}>
         {/* Side panel with two resizable boxes */}
-        <div style={{ display: 'flex', flexDirection: 'column', width: sidebarWidth, padding: '8px', boxSizing: 'border-box', height: canvasHeight }}>
-          <div style={{ height: '50%', backgroundColor: '#2D2D3F', marginBottom: '8px', resize: 'vertical', overflow: 'auto' }}>
-            {/* Box 1: customizable content goes here */}
+        <div style={{ display: 'flex', flexDirection: 'column', width: sidebarWidth, padding: '8px', boxSizing: 'border-box', height: '100vh', position: 'sticky', top: 0 }}>
+          <div style={{ flex: 1, backgroundColor: '#2D2D3F', marginBottom: '8px', resize: 'vertical', overflow: 'auto', minHeight: 0, color: '#fff', padding: '8px' }}>
+            {editingData ? (
+              <div>
+                <h3>Edit Particle</h3>
+                <label>Position X: <input type="number" value={editingData.position.x} onChange={e => setEditingData({ ...editingData, position: { ...editingData.position, x: parseFloat(e.target.value) } })} /></label><br />
+                <label>Position Y: <input type="number" value={editingData.position.y} onChange={e => setEditingData({ ...editingData, position: { ...editingData.position, y: parseFloat(e.target.value) } })} /></label><br />
+                <label>Velocity X: <input type="number" value={editingData.velocity.x} onChange={e => setEditingData({ ...editingData, velocity: { ...editingData.velocity, x: parseFloat(e.target.value) } })} /></label><br />
+                <label>Velocity Y: <input type="number" value={editingData.velocity.y} onChange={e => setEditingData({ ...editingData, velocity: { ...editingData.velocity, y: parseFloat(e.target.value) } })} /></label><br />
+                <label>Mass: <input type="number" value={editingData.mass} onChange={e => setEditingData({ ...editingData, mass: parseFloat(e.target.value) })} /></label><br />
+                <label>Force X: <input type="number" value={editingData.appliedForce.x} onChange={e => setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, x: parseFloat(e.target.value) } })} /></label><br />
+                <label>Force Y: <input type="number" value={editingData.appliedForce.y} onChange={e => setEditingData({ ...editingData, appliedForce: { ...editingData.appliedForce, y: parseFloat(e.target.value) } })} /></label><br />
+                <label>Stationary: <input type="checkbox" checked={editingData.isStationary} onChange={e => setEditingData({ ...editingData, isStationary: e.target.checked })} /></label><br />
+                <button onClick={() => {
+                  if (selectedParticle && editingData) {
+                    selectedParticle.position.x = editingData.position.x;
+                    selectedParticle.position.y = editingData.position.y;
+                    selectedParticle.velocity.x = editingData.velocity.x;
+                    selectedParticle.velocity.y = editingData.velocity.y;
+                    selectedParticle.mass = editingData.mass;
+                    selectedParticle.appliedForce.x = editingData.appliedForce.x;
+                    selectedParticle.appliedForce.y = editingData.appliedForce.y;
+                    selectedParticle.isStationary = editingData.isStationary;
+                    setSelectedParticle(null);
+                    draw();
+                  }
+                }}>
+                  <img src="/check-mark.svg" alt="Save" style={{ width: '24px', height: '24px' }} />
+                </button>
+                <button onClick={() => setSelectedParticle(null)}>Cancel</button>
+              </div>
+            ) : (
+              <p>Select a particle to edit</p>
+            )}
           </div>
-          <div style={{ height: '50%', backgroundColor: '#2D2D3F', resize: 'vertical', overflow: 'auto' }}>
+          <div style={{ flex: 1, backgroundColor: '#2D2D3F', resize: 'vertical', overflow: 'auto', minHeight: 0 }}>
             {/* Box 2: customizable content goes here */}
           </div>
         </div>
@@ -838,28 +916,6 @@ export default function WorldCanvas() {
               </tr>
             </tfoot>
           </table>
-        )}
-
-        {selectedParticle && (
-          <ParticleModal
-            particle={{
-              position: selectedParticle.position,
-              velocity: selectedParticle.velocity,
-              mass: selectedParticle.mass,
-              appliedForce: selectedParticle.appliedForce,
-              isStationary: selectedParticle.isStationary, // Ensure isStationary is passed to the modal
-            }}
-            onSave={(updatedParticle) => {
-              selectedParticle.position = new Vector2D(updatedParticle.position.x, updatedParticle.position.y);
-              selectedParticle.velocity = new Vector2D(updatedParticle.velocity.x, updatedParticle.velocity.y);
-              selectedParticle.mass = updatedParticle.mass;
-              selectedParticle.appliedForce = new Vector2D(updatedParticle.appliedForce.x, updatedParticle.appliedForce.y);
-              selectedParticle.isStationary = updatedParticle.isStationary;
-              setSelectedParticle(null);
-              draw();
-            }}
-            onCancel={() => setSelectedParticle(null)}
-          />
         )}
       </div>
     </div>

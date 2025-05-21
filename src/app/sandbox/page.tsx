@@ -2,9 +2,10 @@ import WorldCanvas from '../../components/WorldCanvas';
 
 export default function Sandbox() {
   return (
-    <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2rem' }}>
-      <h1 style={{ textAlign: 'center', fontSize: '3rem', fontWeight: 'bold' }}>ForcePlay</h1>
+    <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
       <WorldCanvas />
     </main>
   );
 }
+
+ 
