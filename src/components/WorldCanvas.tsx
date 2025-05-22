@@ -1,7 +1,7 @@
 'use client';
 
 // imports for the project
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { World } from '../lib/physics/World';
 import { Particle } from '../lib/physics/Particle';
 import EditableCell from './EditableCell';
@@ -314,8 +314,8 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     }
   };
 
-  // Draw all particles and slopes
-  const draw = () => {
+  // Draw all particles and slopes (memoized)
+  const draw = useCallback(() => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
 
@@ -342,12 +342,12 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     });
 
     // Draw particles
-    for (const p of world.particles) {
-      const flippedY = canvasHeight - p.position.y; // Flip y-coordinate to fix coordinates system.
+    for (let i = 0, len = world.particles.length; i < len; i++) {
+      const p = world.particles[i];
+      const flippedY = canvasHeight - p.position.y;
 
       ctx.beginPath();
       ctx.arc(p.position.x, flippedY, particleRadius, 0, 2 * Math.PI);
-      
       ctx.save();
       ctx.shadowColor = 'cyan';
       ctx.shadowBlur = 50;
@@ -355,23 +355,21 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
       ctx.fill();
       ctx.restore();
 
-      ctx.fillStyle = 'cyan'; // Set circle color to cyan (main fill)
+      ctx.fillStyle = 'cyan';
       ctx.fill();
       ctx.strokeStyle = 'cyan';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-
-      // Draw the label
-      ctx.fillStyle = 'black'; // Set text color to black
+      // Draw the label without expensive indexOf
+      ctx.fillStyle = 'black';
       ctx.font = '16px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const index = world.particles.indexOf(p);
-      const label = String.fromCharCode(65 + (index % 26)) + (index >= 26 ? Math.floor(index / 26) : '');
+      const label = String.fromCharCode(65 + (i % 26)) + (i >= 26 ? Math.floor(i / 26) : '');
       ctx.fillText(label, p.position.x, flippedY);
     }
-  };
+  }, [canvasRef]);
 
   const handleDownload = () => {
     const particleData = world.particles.map((p) => ({
@@ -500,16 +498,18 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
           world.step(1 / 30); // faster sim
         }
         draw();
+        // Only trigger React re-render if attributes table is visible
+        if (showAttributesTable) {
+          setFrameTick((tick) => tick + 1);
+        }
       }
 
-      // Force re-render to update table
-      setFrameTick((tick) => tick + 1);
       animationFrame = requestAnimationFrame(loop);
     };
 
     animationFrame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrame);
-  }, [isPlaying]);
+  }, [isPlaying, showAttributesTable]);
 
   useEffect(() => {
     const updateScale = () => {

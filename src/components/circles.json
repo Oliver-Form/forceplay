@@ -1,0 +1,43 @@
+{
+  "particles": [
+    {
+      "position": {
+        "x": 934.3318081631159,
+        "y": 243.02230091383066
+      },
+      "velocity": {
+        "x": -63.1075429279334,
+        "y": -9.452841530960544
+      },
+      "mass": 1,
+      "appliedForce": {
+        "x": 0,
+        "y": 0
+      },
+      "isStationary": false
+    },
+    {
+      "position": {
+        "x": 950,
+        "y": 138.42083417911948
+      },
+      "velocity": {
+        "x": 0,
+        "y": -64.39627796823554
+      },
+      "mass": 1,
+      "appliedForce": {
+        "x": 0,
+        "y": 0
+      },
+      "isStationary": true
+    }
+  ],
+  "slopes": [],
+  "ropes": [
+    {
+      "startIndex": 1,
+      "endIndex": 0
+    }
+  ]
+}
