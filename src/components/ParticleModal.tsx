@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Vector2D } from '../lib/physics/Vector2D';
+import { Vector2D } from '../lib/physics/VectorFunctions';
 
 interface ParticleModalProps {
   particle: {

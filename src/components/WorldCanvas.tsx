@@ -5,7 +5,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { World } from '../lib/physics/World';
 import { Particle } from '../lib/physics/Particle';
 import EditableCell from './EditableCell';
-import { Vector2D } from '../lib/physics/Vector2D';
+import { Vector2D } from '../lib/physics/VectorFunctions';
 import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
 
 // declare constants
@@ -417,10 +417,13 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
           return particle;
         });
 
-        world.slopes = data.slopes.map((s: any) => ({
-          start: new Vector2D(s.start.x, s.start.y),
-          end: new Vector2D(s.end.x, s.end.y),
-        }));
+        // Convert slope records into Vector2D objects
+        world.slopes = data.slopes.map((s: any) => {
+          return {
+            start: new Vector2D(s.start.x, s.start.y),
+            end:   new Vector2D(s.end.x,   s.end.y),
+          };
+        });
         // Load rope connections if present
         world.ropes = [];
         if (data.ropes) {
@@ -578,7 +581,15 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
           <div style={{ flex: 1, backgroundColor: '#2D2D3F', marginBottom: '8px', resize: 'vertical', overflow: 'auto', minHeight: 0, color: '#fff', padding: '8px' }}>
             {editingData ? (
               <div>
-                <h3>Edit Particle</h3>
+                <h3>
+                  Edit Particle{' '}
+                  {(() => {
+                    const idx = world.particles.indexOf(selectedParticle!);
+                    const letter = String.fromCharCode(65 + (idx % 26));
+                    const suffix = idx >= 26 ? Math.floor(idx / 26) : '';
+                    return `${letter}${suffix}`;
+                  })()}
+                </h3>
                 {/* Position X */}
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
                   <label style={{ flex: 1 }}>Position X:
@@ -1039,4 +1050,3 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
   );
 }
 
-//

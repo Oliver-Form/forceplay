@@ -1,5 +1,5 @@
 import { Particle } from './Particle';
-  import { Vector2D } from './Vector2D';
+  import { Vector2D } from './VectorFunctions';
 
   // Coefficient of restitution, default bounce factor between 0 and 1
   // Removed global const e in favor of instance property
@@ -44,12 +44,16 @@ import { Particle } from './Particle';
     step(dt: number) {
       for (const p of this.particles) {
         if (!p.isStationary) {
-          const gravity = new Vector2D(0, -9.8 * p.mass);
-          const netForce = gravity.add(p.appliedForce);
-          const acceleration = netForce.scale(1 / p.mass);
-          p.velocity = p.velocity.add(acceleration.scale(dt));
-          p.position = p.position.add(p.velocity.scale(dt));
-
+          // compute net force and integrate without allocations
+          const fx = p.appliedForce.x;
+          const fy = p.appliedForce.y - 9.8 * p.mass;
+          const invM = 1 / p.mass;
+          // velocity update: v += (F/m) * dt
+          p.velocity.x += fx * invM * dt;
+          p.velocity.y += fy * invM * dt;
+          // position update: x += v * dt
+          p.position.x += p.velocity.x * dt;
+          p.position.y += p.velocity.y * dt;
           // Apply energy correction
           p.correctEnergy(9.8);
 
@@ -219,3 +223,4 @@ import { Particle } from './Particle';
     }
   }
 
+// 

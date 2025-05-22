@@ -1,4 +1,4 @@
-import { Vector2D } from './Vector2D';
+import { Vector2D } from './VectorFunctions';
 
 export class Particle {
   position: Vector2D;

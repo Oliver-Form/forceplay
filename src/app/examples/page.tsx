@@ -1,9 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from 'react';
 
-import { World } from '../../lib/physics/World';
-import { Particle } from '../../lib/physics/Particle';
-import { Vector2D } from '../../lib/physics/Vector2D';
 import { supabase } from '../../lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
@@ -97,7 +94,7 @@ export default function ExamplesPage() {
   return (
     <div style={{ padding: '16px' }}>
       <h1>Examples</h1>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'flex-start' }}>
         {examples.map((ex) => (
           <div key={ex.id} style={{
             border: '1px solid #444',
@@ -120,4 +117,3 @@ export default function ExamplesPage() {
     </div>
   );
 }
-// 

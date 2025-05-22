@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React, { useRef, useEffect, useState, RefObject } from 'react';
 import { WorldNoGravity } from '../lib/physics/WorldNoGravity';
 import { Particle } from '../lib/physics/Particle';
-import { Vector2D } from '../lib/physics/Vector2D';
+import { Vector2D } from '../lib/physics/VectorFunctions';
 import TypewriterText from '../components/TypewriterText';
 
 import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON

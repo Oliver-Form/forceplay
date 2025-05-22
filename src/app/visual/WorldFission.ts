@@ -1,5 +1,5 @@
 import { Particle } from '../../lib/physics/Particle';
-import { Vector2D } from '../../lib/physics/Vector2D';
+import { Vector2D } from '../../lib/physics/VectorFunctions';
 
   export class WorldNoGravity {
     particles: Particle[] = [];
