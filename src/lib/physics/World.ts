@@ -6,11 +6,19 @@ import { Particle } from './Particle';
 
   export class World {
     restitution: number;
+    useGravity: boolean = true; // gravity enabled flag
     /**
      * Create a new World with given restitution coefficient (0-1)
      */
     constructor(restitution = 0.88) {
       this.restitution = restitution;
+    }
+
+    /**
+     * Enable or disable gravity.
+     */
+    setGravityEnabled(value: boolean) {
+      this.useGravity = value;
     }
 
     particles: Particle[] = [];
@@ -46,7 +54,8 @@ import { Particle } from './Particle';
         if (!p.isStationary) {
           // compute net force and integrate without allocations
           const fx = p.appliedForce.x;
-          const fy = p.appliedForce.y - 9.8 * p.mass;
+          const g = this.useGravity ? 9.8 : 0;
+          const fy = p.appliedForce.y - g * p.mass;
           const invM = 1 / p.mass;
           // velocity update: v += (F/m) * dt
           p.velocity.x += fx * invM * dt;
@@ -55,7 +64,7 @@ import { Particle } from './Particle';
           p.position.x += p.velocity.x * dt;
           p.position.y += p.velocity.y * dt;
           // Apply energy correction
-          p.correctEnergy(9.8);
+          p.correctEnergy(g);
 
           // Check for collisions with slopes
           for (const slope of this.slopes) {
@@ -223,3 +232,4 @@ import { Particle } from './Particle';
     }
   }
 
+// 

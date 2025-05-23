@@ -73,6 +73,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
   const [selectedParticle, setSelectedParticle] = useState<Particle | null>(null);
   const [slopeMode, setSlopeMode] = useState(false);
   const [slopePoints, setSlopePoints] = useState<Vector2D[]>([]);
+  const [previewPoint, setPreviewPoint] = useState<Vector2D | null>(null);
   const [showSlopeModal, setShowSlopeModal] = useState(false);
   const [highlightedSlope, setHighlightedSlope] = useState<number | null>(null);
   const [ropeMode, setRopeMode] = useState(false);
@@ -81,6 +82,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
   const [isInverted, setIsInverted] = useState(false);
   const [showAttributesTable, setShowAttributesTable] = useState(false);
   const [restitutionValue, setRestitutionValue] = useState(world.restitution);
+  const [gravityEnabled, setGravityEnabled] = useState(world.useGravity);
   const [showCoordinateModal, setShowCoordinateModal] = useState(false);
   const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
   const [heritageError, setHeritageError] = useState<boolean>(false);
@@ -103,7 +105,16 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     if (e.shiftKey) {
       setShowCoordinateModal(true);
     } else {
-      setSlopeMode((prev) => !prev);
+      setSlopeMode((prev) => {
+        const newMode = !prev;
+        if (newMode === false) {
+          setSlopePoints([]);
+          setPreviewPoint(null);
+        }
+        return newMode;
+      });
+      setSlopePoints([]);
+      setPreviewPoint(null);
     }
   };
 
@@ -283,6 +294,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
           world.addSlope(updatedPoints[0], updatedPoints[1]);
           setSlopeMode(false);
           setSlopePoints([]);
+          setPreviewPoint(null);
           draw();
         }
         return updatedPoints;
@@ -314,6 +326,20 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     }
   };
 
+  // Add mouse move handler for slope preview
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!slopeMode || slopePoints.length !== 1) return;
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+    const x = clientX / scale;
+    const y = canvasHeight - (clientY / scale);
+    const point = new Vector2D(x, y);
+    setPreviewPoint(point);
+    draw();
+  };
+
   // Draw all particles and slopes (memoized)
   const draw = useCallback(() => {
     const ctx = canvasRef.current?.getContext('2d');
@@ -340,6 +366,19 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
       ctx.lineWidth = 3; // Increase line width for better visibility
       ctx.stroke();
     });
+    // Draw rubber-band preview when placing a slope
+    if (slopeMode && slopePoints.length === 1 && previewPoint) {
+      const start = slopePoints[0];
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(start.x, canvasHeight - start.y);
+      ctx.lineTo(previewPoint.x, canvasHeight - previewPoint.y);
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // Draw particles
     for (let i = 0, len = world.particles.length; i < len; i++) {
@@ -369,7 +408,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
       const label = String.fromCharCode(65 + (i % 26)) + (i >= 26 ? Math.floor(i / 26) : '');
       ctx.fillText(label, p.position.x, flippedY);
     }
-  }, [canvasRef]);
+  }, [canvasRef, slopeMode, slopePoints, previewPoint]);
 
   const handleDownload = () => {
     const particleData = world.particles.map((p) => ({
@@ -837,6 +876,20 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
                   />
                 </label>
                 <br />
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={gravityEnabled}
+                    onChange={(e) => {
+                      const enabled = e.target.checked;
+                      setGravityEnabled(enabled);
+                      world.setGravityEnabled(enabled);
+                      draw();
+                    }}
+                  />
+                  Enable Gravity
+                </label>
+                <br />
                 <button onClick={() => setShowSettingsModal(false)}>Close</button>
               </div>
             </div>
@@ -890,7 +943,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
             height={canvasHeight}
             style={{ border: '1px solid #F0F0F0' }}
             onClick={handleCanvasClick}
-            onContextMenu={handleCanvasRightClick}
+            onMouseMove={handleMouseMove}
           />
 
           {/* usage instructions */}
@@ -1049,4 +1102,3 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     </div>
   );
 }
-
