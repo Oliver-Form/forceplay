@@ -41,11 +41,20 @@ import { Particle } from './Particle';
       this.slopes.push({ start, end });
     }
 
-    addRope(start: Particle, end: Particle) {
-      const dx = end.position.x - start.position.x;
-      const dy = end.position.y - start.position.y;
-      const length = Math.sqrt(dx * dx + dy * dy);
-      this.ropes.push({ start, end, length });
+    /**
+     * Add a rope constraint between two particles, with optional fixed length.
+     * If length is not provided, it is computed from current positions.
+     */
+    addRope(start: Particle, end: Particle, length?: number) {
+      let ropeLength: number;
+      if (length !== undefined) {
+        ropeLength = length;
+      } else {
+        const dx = end.position.x - start.position.x;
+        const dy = end.position.y - start.position.y;
+        ropeLength = Math.sqrt(dx * dx + dy * dy);
+      }
+      this.ropes.push({ start, end, length: ropeLength });
     }
 
     // Run physics for each step ('time' delta dt)
@@ -232,4 +241,3 @@ import { Particle } from './Particle';
     }
   }
 
-// 

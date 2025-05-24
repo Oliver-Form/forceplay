@@ -47,8 +47,17 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
           initialData.ropes.forEach((r: any) => {
             const p1 = world.particles[r.startIndex];
             const p2 = world.particles[r.endIndex];
-            if (p1 && p2) world.addRope(p1, p2);
+            if (p1 && p2) world.addRope(p1, p2, r.length);
           });
+        }
+        // Restore settings if present (examples load)
+        if (typeof initialData.restitution === 'number') {
+          setRestitutionValue(initialData.restitution);
+          world.setRestitution(initialData.restitution);
+        }
+        if (typeof initialData.gravityEnabled === 'boolean') {
+          setGravityEnabled(initialData.gravityEnabled);
+          world.setGravityEnabled(initialData.gravityEnabled);
         }
         draw();
       } catch (err) {
@@ -430,6 +439,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     const ropeData = world.ropes.map((r) => ({
       startIndex: world.particles.indexOf(r.start),
       endIndex: world.particles.indexOf(r.end),
+      length: r.length,
     }));
     const data = { particles: particleData, slopes: slopeData, ropes: ropeData, restitution: restitutionValue, gravityEnabled };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -471,7 +481,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
           data.ropes.forEach((r: any) => {
             const p1 = world.particles[r.startIndex];
             const p2 = world.particles[r.endIndex];
-            if (p1 && p2) world.addRope(p1, p2);
+            if (p1 && p2) world.addRope(p1, p2, r.length);
           });
         }
         // Restore settings if present (backward-compatible)
@@ -620,7 +630,11 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     // build data object
     const particleData = world.particles.map(p => ({ position: { x: p.position.x, y: p.position.y }, velocity: { x: p.velocity.x, y: p.velocity.y }, mass: p.mass, appliedForce: { x: p.appliedForce.x, y: p.appliedForce.y }, isStationary: p.isStationary }));
     const slopeData = world.slopes.map(s => ({ start: { x: s.start.x, y: s.start.y }, end: { x: s.end.x, y: s.end.y } }));
-    const ropeData = world.ropes.map(r => ({ startIndex: world.particles.indexOf(r.start), endIndex: world.particles.indexOf(r.end) }));
+    const ropeData = world.ropes.map(r => ({
+      startIndex: world.particles.indexOf(r.start),
+      endIndex: world.particles.indexOf(r.end),
+      length: r.length,
+    }));
     const data = { particles: particleData, slopes: slopeData, ropes: ropeData, restitution: restitutionValue, gravityEnabled };
     const { error } = await supabase.from('examples').insert({ Name: name, Data: data });
     if (error) alert('Save failed: ' + error.message);
