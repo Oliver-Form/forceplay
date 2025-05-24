@@ -7,6 +7,8 @@ import { Particle } from '../lib/physics/Particle';
 import EditableCell from './EditableCell';
 import { Vector2D } from '../lib/physics/VectorFunctions';
 import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
+import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
 
 // declare constants
 const canvasWidth = 1900;
@@ -15,9 +17,11 @@ const particleRadius = 10;
 
 // declare instance of World object
 const world = new World();
+export { world as worldInstance }; // allow importing live world state
 
 interface WorldCanvasProps { initialData?: any | null; }
 export default function WorldCanvas({ initialData }: WorldCanvasProps) {
+  const router = useRouter();
   // Scaling logic similar to HomeWorldCanvas
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ top: 0, left: 0 });
@@ -609,6 +613,20 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     }
   }, [selectedParticle]);
 
+  // Save current world as example
+  const handleSaveExample = async () => {
+    const name = prompt('Enter a name for this example:');
+    if (!name) return;
+    // build data object
+    const particleData = world.particles.map(p => ({ position: { x: p.position.x, y: p.position.y }, velocity: { x: p.velocity.x, y: p.velocity.y }, mass: p.mass, appliedForce: { x: p.appliedForce.x, y: p.appliedForce.y }, isStationary: p.isStationary }));
+    const slopeData = world.slopes.map(s => ({ start: { x: s.start.x, y: s.start.y }, end: { x: s.end.x, y: s.end.y } }));
+    const ropeData = world.ropes.map(r => ({ startIndex: world.particles.indexOf(r.start), endIndex: world.particles.indexOf(r.end) }));
+    const data = { particles: particleData, slopes: slopeData, ropes: ropeData, restitution: restitutionValue, gravityEnabled };
+    const { error } = await supabase.from('examples').insert({ Name: name, Data: data });
+    if (error) alert('Save failed: ' + error.message);
+    else alert('Example saved successfully!');
+  };
+
   return (
     <div
       ref={containerRef}
@@ -777,57 +795,23 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
                   />
                 </button>
               </div>
-              <div>
-                <button
-                  onClick={() => setShowSettingsModal(true)}
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                  }}
-                >
-                  <img
-                    src="/settings.svg"
-                    alt="Settings"
-                    style={{ width: '24px', height: '24px' }}
-                  />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button onClick={() => setShowSettingsModal(true)} style={{ cursor: 'pointer', padding: '4px 8px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                  Settings
                 </button>
-                <button
-                  onClick={handleDownload}
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                  }}
-                >
-                  <img
-                    src="/download.svg"
-                    alt="Download"
-                    style={{ width: '24px', height: '24px' }}
-                  />
+                <button onClick={handleDownload} style={{ cursor: 'pointer', padding: '4px 8px', background: '#888', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                  Download JSON
                 </button>
-                <label
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                  }}
-                >
-                  <img
-                    src="/upload.svg"
-                    alt="Upload"
-                    style={{ width: '24px', height: '24px' }}
-                  />
-                  <input
-                    type="file"
-                    accept="application/json"
-                    onChange={handleUpload}
-                    style={{ display: 'none' }}
-                  />
+                <label style={{ cursor: 'pointer', padding: '4px 8px', background: '#666', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                  Upload JSON
+                  <input type="file" accept="application/json" onChange={handleUpload} style={{ display: 'none' }} />
                 </label>
+                <button onClick={() => router.push('/examples')} style={{ cursor: 'pointer', padding: '4px 8px', background: '#4caf50', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                  View Examples
+                </button>
+                <button onClick={handleSaveExample} style={{ cursor: 'pointer', padding: '4px 8px', background: '#2196f3', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                  Save Example
+                </button>
               </div>
             </div>
           </div>
@@ -1111,3 +1095,4 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     </div>
   );
 }
+
