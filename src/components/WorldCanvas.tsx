@@ -957,6 +957,9 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
                 <button onClick={() => setShowSettingsModal(true)} style={{ cursor: 'pointer', padding: '4px 8px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px' }}>
                   Settings
                 </button>
+                <button onClick={() => router.push('/feedback')} style={{ cursor: 'pointer', padding: '4px 8px', background: '#ff9800', color: '#fff', border: 'none', borderRadius: '4px', marginLeft: '8px' }}>
+                  Give Feedback / Suggest Features
+                </button>
                 <button onClick={handleDownload} style={{ cursor: 'pointer', padding: '4px 8px', background: '#888', color: '#fff', border: 'none', borderRadius: '4px' }}>
                   Download JSON
                 </button>
