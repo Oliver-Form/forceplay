@@ -12,6 +12,8 @@ interface Feedback {
   created_at: string;
 }
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function FeedbackPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [form, setForm] = useState(() => {
@@ -40,6 +42,11 @@ export default function FeedbackPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    // ensure valid email format
+    if (!emailRegex.test(form.email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from('feedback')
@@ -127,4 +134,3 @@ export default function FeedbackPage() {
     </div>
   );
 }
-
