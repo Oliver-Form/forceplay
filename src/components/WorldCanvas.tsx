@@ -97,6 +97,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
   const [restitutionValue, setRestitutionValue] = useState(world.restitution);
   const [gravityEnabled, setGravityEnabled] = useState(world.useGravity);
   const [showCoordinateModal, setShowCoordinateModal] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
   const [heritageError, setHeritageError] = useState<boolean>(false);
   // Editing data for inline particle attribute form
@@ -973,6 +974,9 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
                 <button onClick={handleSaveExample} style={{ cursor: 'pointer', padding: '4px 8px', background: '#2196f3', color: '#fff', border: 'none', borderRadius: '4px' }}>
                   Save to Gallery
                 </button>
+                <button onClick={() => setShowTutorialModal(true)} style={{ cursor: 'pointer', padding: '4px 8px', background: '#999', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                  Tutorial
+                </button>
               </div>
             </div>
           </div>
@@ -1087,6 +1091,31 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
                 <br />
                 <button onClick={handleCoordinateModalSave}>Save </button>
                 <button onClick={handleCoordinateModalCancel}> Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {showTutorialModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(128,128,128,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <div style={{
+                backgroundColor: '#888',
+                padding: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+              }}>
+                <h3>Tutorial</h3>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                <button onClick={() => setShowTutorialModal(false)}>Close</button>
               </div>
             </div>
           )}
@@ -1259,4 +1288,4 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     </div>
   );
 }
-
+// 
