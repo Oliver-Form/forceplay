@@ -118,7 +118,10 @@ export default function FeedbackPage() {
         </form>
       </div>
 
-      <h2>All Feedback</h2>
+    <h2 style={{ fontWeight: 'bold', textAlign: 'center', fontSize: '2rem', margin: '2rem 0 1rem' }}>
+      All Feedback
+    </h2>
+      <hr style={{ borderColor: 'var(--foreground)', marginBottom: '1rem' }} />
       {feedbacks.length === 0 ? (
         <p>No feedback yet. Be the first to comment!</p>
       ) : (
