@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, FormEvent } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 
 interface Feedback {
   id: string;
@@ -15,6 +16,7 @@ interface Feedback {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function FeedbackPage() {
+  const router = useRouter();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [form, setForm] = useState(() => {
     // Prefill name/email from localStorage
@@ -134,6 +136,13 @@ export default function FeedbackPage() {
           ))}
         </ul>
       )}
+      {/* Back button fixed in bottom-right */}
+      <button
+        onClick={() => router.push('/sandbox')}
+        style={{ position: 'fixed', bottom: '1rem', right: '1rem', padding: '0.75rem 1.25rem', background: '#2196f3', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+      >
+        Back to Sandbox
+      </button>
     </div>
   );
 }

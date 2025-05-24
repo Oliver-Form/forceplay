@@ -114,6 +114,13 @@ export default function ExamplesPage() {
           </div>
         ))}
       </div>
+      {/* Back button fixed in bottom-right */}
+      <button
+        onClick={() => router.push('/sandbox')}
+        style={{ position: 'fixed', bottom: '1rem', right: '1rem', padding: '0.75rem 1.25rem', background: '#2196f3', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+      >
+        Back to Sandbox
+      </button>
     </div>
   );
 }
