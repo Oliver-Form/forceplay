@@ -111,6 +111,13 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
   const [anchorParticle, setAnchorParticle] = useState<Particle | null>(null);
   const [angularSpeed, setAngularSpeed] = useState<number>(0);
 
+  // Fling drag state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<Vector2D | null>(null);
+  const [dragCurrent, setDragCurrent] = useState<Vector2D | null>(null);
+  const [dragParticle, setDragParticle] = useState<Particle | null>(null);
+  const [hasDragged, setHasDragged] = useState(false);
+
   const updateForce = (particle: Particle, fx: number, fy: number) => {
     particle.appliedForce.x = fx;
     particle.appliedForce.y = fy;
@@ -242,6 +249,10 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
 
   // Function to handle particle click or slope creation
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (hasDragged) {
+      setHasDragged(false);
+      return;
+    }
     e.preventDefault();
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -344,6 +355,18 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
 
   // Add mouse move handler for slope preview
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDragging && dragParticle) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const clientX = e.clientX - rect.left;
+      const clientY = e.clientY - rect.top;
+      const x = clientX / scale;
+      const y = canvasHeight - (clientY / scale);
+      setDragCurrent(new Vector2D(x, y));
+      setHasDragged(true);
+      draw();
+      return;
+    }
     if (!slopeMode || slopePoints.length !== 1) return;
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -354,6 +377,55 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     const point = new Vector2D(x, y);
     setPreviewPoint(point);
     draw();
+  };
+
+  // Fling-to-launch mouse handlers
+  const handleMouseDownFling = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+    const x = clientX / scale;
+    const y = canvasHeight - (clientY / scale);
+    const clickedParticle = world.particles.find(p => {
+      const dx = p.position.x - x;
+      const dy = p.position.y - y;
+      return Math.sqrt(dx * dx + dy * dy) <= particleRadius;
+    });
+    if (clickedParticle && !clickedParticle.isStationary) {
+      // Ready to drag this particle
+      setIsPlaying(false);
+      setDragParticle(clickedParticle);
+      setIsDragging(true);
+      setDragStart(new Vector2D(clickedParticle.position.x, clickedParticle.position.y));
+      setDragCurrent(new Vector2D(clickedParticle.position.x, clickedParticle.position.y));
+      setHasDragged(false);
+    }
+  };
+
+  const handleMouseUpFling = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isDragging && dragParticle && dragStart && dragCurrent) {
+      // Compute drag vector
+      const dx = dragCurrent.x - dragStart.x;
+      const dy = dragCurrent.y - dragStart.y;
+      const forceScale = 5;
+      // Apply scaled impulse for noticeable launch
+      dragParticle.velocity.x = dx * forceScale;
+      dragParticle.velocity.y = dy * forceScale;
+      world.step(1/30);
+      draw();
+      setIsPlaying(true);
+    }
+    // Reset drag state
+    setIsDragging(false);
+    setDragParticle(null);
+    setDragStart(null);
+    setDragCurrent(null);
+    setHasDragged(false);
   };
 
   // Draw all particles and slopes (memoized)
@@ -424,7 +496,20 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
       const label = String.fromCharCode(65 + (i % 26)) + (i >= 26 ? Math.floor(i / 26) : '');
       ctx.fillText(label, p.position.x, flippedY);
     }
-  }, [canvasRef, slopeMode, slopePoints, previewPoint]);
+
+    // Draw fling preview line
+    if (isDragging && dragParticle && dragCurrent) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(dragParticle.position.x, canvasHeight - dragParticle.position.y);
+      ctx.lineTo(dragCurrent.x, canvasHeight - dragCurrent.y);
+      ctx.strokeStyle = 'yellow';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }, [canvasRef, slopeMode, slopePoints, previewPoint, isDragging, dragParticle, dragCurrent]);
 
   const handleDownload = () => {
     const particleData = world.particles.map((p) => ({
@@ -1007,7 +1092,10 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
             ref={canvasRef}
             width={canvasWidth}
             height={canvasHeight}
+            onMouseLeave={handleMouseUpFling}
             style={{ border: '1px solid #F0F0F0' }}
+            onMouseDown={handleMouseDownFling}
+            onMouseUp={handleMouseUpFling}
             onClick={handleCanvasClick}
             onMouseMove={handleMouseMove}
           />
