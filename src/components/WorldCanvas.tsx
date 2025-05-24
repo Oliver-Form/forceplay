@@ -880,10 +880,10 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
                   <input type="file" accept="application/json" onChange={handleUpload} style={{ display: 'none' }} />
                 </label>
                 <button onClick={() => router.push('/examples')} style={{ cursor: 'pointer', padding: '4px 8px', background: '#4caf50', color: '#fff', border: 'none', borderRadius: '4px' }}>
-                  View Examples
+                  View Gallery
                 </button>
                 <button onClick={handleSaveExample} style={{ cursor: 'pointer', padding: '4px 8px', background: '#2196f3', color: '#fff', border: 'none', borderRadius: '4px' }}>
-                  Save Example
+                  Save to Gallery
                 </button>
               </div>
             </div>
