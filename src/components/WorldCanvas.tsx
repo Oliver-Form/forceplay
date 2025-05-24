@@ -476,16 +476,22 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
 
       ctx.beginPath();
       ctx.arc(p.position.x, flippedY, particleRadius, 0, 2 * Math.PI);
+      // golden-angle colour
+      const golden = 137.508;
+      const hue = (i * golden) % 360;
+    
+     // fill with shadow
       ctx.save();
-      ctx.shadowColor = 'cyan';
+      ctx.shadowColor = `hsl(${hue},70%,65%)`;
       ctx.shadowBlur = 50;
-      ctx.fillStyle = 'cyan';
+      ctx.fillStyle = `hsl(${hue},70%,65%)`;
       ctx.fill();
       ctx.restore();
 
-      ctx.fillStyle = 'cyan';
+     // main fill and stroke
+      ctx.fillStyle = `hsl(${hue},70%,65%)`;
       ctx.fill();
-      ctx.strokeStyle = 'cyan';
+      ctx.strokeStyle = `hsl(${hue},70%,45%)`;
       ctx.lineWidth = 2;
       ctx.stroke();
 
@@ -1288,4 +1294,3 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     </div>
   );
 }
-// 
