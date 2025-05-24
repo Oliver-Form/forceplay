@@ -28,22 +28,7 @@ export default function RootLayout({
       >
         <div id="modal-root"></div>
         {children}
-        <Link href="/examples">
-          <button style={{
-            position: 'fixed',
-            bottom: '16px',
-            right: '16px',
-            padding: '8px 12px',
-            backgroundColor: '#2D2D3F',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            zIndex: 1000
-          }}>
-            View Examples
-          </button>
-        </Link>
+        
       </body>
     </html>
   );
