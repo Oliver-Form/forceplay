@@ -14,13 +14,22 @@ interface Feedback {
 
 export default function FeedbackPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-  const [form, setForm] = useState({ name: '', email: '', title: '', message: '' });
+  const [form, setForm] = useState(() => {
+    // Prefill name/email from localStorage
+    let storedName = '';
+    let storedEmail = '';
+    if (typeof window !== 'undefined') {
+      storedName = localStorage.getItem('feedbackName') || '';
+      storedEmail = localStorage.getItem('feedbackEmail') || '';
+    }
+    return { name: storedName, email: storedEmail, title: '', message: '' };
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchFeedback() {
       const { data, error } = await supabase
-        .from<Feedback>('feedback')
+        .from('feedback')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) console.error('Error fetching feedback:', error);
@@ -45,7 +54,7 @@ export default function FeedbackPage() {
     }
     setLoading(false);
   };
-
+  
   return (
     <div style={{ maxWidth: 600, margin: '2rem auto', padding: '0 1rem' }}>
       <h1>Feedback & Feature Suggestions</h1>
@@ -55,7 +64,11 @@ export default function FeedbackPage() {
             <label>Name:<br />
               <input
                 type="text" required value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
+                onChange={e => {
+                  const v = e.target.value;
+                  setForm(f => ({ ...f, name: v }));
+                  localStorage.setItem('feedbackName', v);
+                }}
                 style={{ width: '100%', padding: '8px', border: '1px solid #fff', borderRadius: '4px', backgroundColor: 'var(--background)', color: 'var(--foreground)', boxSizing: 'border-box', marginTop: '4px', marginBottom: '8px' }}
               />
             </label>
@@ -64,7 +77,11 @@ export default function FeedbackPage() {
             <label>Email:<br />
               <input
                 type="email" required value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
+                onChange={e => {
+                  const v = e.target.value;
+                  setForm(f => ({ ...f, email: v }));
+                  localStorage.setItem('feedbackEmail', v);
+                }}
                 style={{ width: '100%', padding: '8px', border: '1px solid #fff', borderRadius: '4px', backgroundColor: 'var(--background)', color: 'var(--foreground)', boxSizing: 'border-box', marginTop: '4px', marginBottom: '8px' }}
               />
             </label>
@@ -110,3 +127,4 @@ export default function FeedbackPage() {
     </div>
   );
 }
+
