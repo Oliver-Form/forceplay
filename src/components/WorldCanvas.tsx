@@ -107,6 +107,9 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     appliedForce: { x: number; y: number };
     isStationary: boolean;
   } | null>(null);
+  // Circular motion state for rope-connected particles
+  const [anchorParticle, setAnchorParticle] = useState<Particle | null>(null);
+  const [angularSpeed, setAngularSpeed] = useState<number>(0);
 
   const updateForce = (particle: Particle, fx: number, fy: number) => {
     particle.appliedForce.x = fx;
@@ -608,9 +611,10 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     };
   }, []);
 
-  // Sync selectedParticle to editingData when a particle is clicked
+  // Sync selectedParticle to editingData and compute circular motion state
   useEffect(() => {
     if (selectedParticle) {
+      // inline edit form data
       setEditingData({
         position: { x: selectedParticle.position.x, y: selectedParticle.position.y },
         velocity: { x: selectedParticle.velocity.x, y: selectedParticle.velocity.y },
@@ -618,8 +622,28 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
         appliedForce: { x: selectedParticle.appliedForce.x, y: selectedParticle.appliedForce.y },
         isStationary: selectedParticle.isStationary,
       });
+      // compute circular motion if tethered
+      const rope = world.ropes.find(r =>
+        (r.start === selectedParticle && r.end.isStationary) ||
+        (r.end === selectedParticle && r.start.isStationary)
+      );
+      if (rope) {
+        const stationary = rope.start.isStationary ? rope.start : rope.end;
+        const mobile = stationary === rope.start ? rope.end : rope.start;
+        const dx = mobile.position.x - stationary.position.x;
+        const dy = mobile.position.y - stationary.position.y;
+        const r2 = dx*dx + dy*dy || 1;
+        const omega = (dx * mobile.velocity.y - dy * mobile.velocity.x) / r2;
+        setAnchorParticle(stationary);
+        setAngularSpeed(omega);
+      } else {
+        setAnchorParticle(null);
+        setAngularSpeed(0);
+      }
     } else {
       setEditingData(null);
+      setAnchorParticle(null);
+      setAngularSpeed(0);
     }
   }, [selectedParticle]);
 
@@ -770,7 +794,42 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
              )}
           </div>
           <div style={{ flex: 1, backgroundColor: '#2D2D3F', resize: 'vertical', overflow: 'auto', minHeight: 0 }}>
-            {/* Box 2: customizable content goes here */}
+            {/* Box 2: circular motion controls or guidance */}
+            {selectedParticle ? (
+              anchorParticle ? (
+                <div style={{ padding: '8px', color: '#fff' }}>
+                  <h3>Circular Motion</h3>
+                  <label>
+                    Angular Speed:
+                    <input
+                      type="number"
+                      value={angularSpeed}
+                      step="0.01"
+                      onChange={(e) => {
+                        const o = parseFloat(e.target.value);
+                        if (!isNaN(o) && anchorParticle) {
+                          setAngularSpeed(o);
+                          const dx = selectedParticle.position.x - anchorParticle.position.x;
+                          const dy = selectedParticle.position.y - anchorParticle.position.y;
+                          selectedParticle.velocity.x = -o * dy;
+                          selectedParticle.velocity.y = o * dx;
+                          draw();
+                        }
+                      }}
+                      style={{ marginLeft: '8px', width: '80px' }}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div style={{ padding: '8px', color: '#fff' }}>
+                  <p>Select a rope-connected particle to adjust circular motion.</p>
+                </div>
+              )
+            ) : (
+              <div style={{ padding: '8px', color: '#fff' }}>
+                <p>Select a particle to see circular motion controls.</p>
+              </div>
+            )}
           </div>
         </div>
         {/* Main canvas and upper controls panel */}
