@@ -427,7 +427,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
       startIndex: world.particles.indexOf(r.start),
       endIndex: world.particles.indexOf(r.end),
     }));
-    const data = { particles: particleData, slopes: slopeData, ropes: ropeData };
+    const data = { particles: particleData, slopes: slopeData, ropes: ropeData, restitution: restitutionValue, gravityEnabled };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     saveAs(blob, 'world_data.json');
   };
@@ -469,6 +469,15 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
             const p2 = world.particles[r.endIndex];
             if (p1 && p2) world.addRope(p1, p2);
           });
+        }
+        // Restore settings if present (backward-compatible)
+        if (typeof data.restitution === 'number') {
+          setRestitutionValue(data.restitution);
+          world.setRestitution(data.restitution);
+        }
+        if (typeof data.gravityEnabled === 'boolean') {
+          setGravityEnabled(data.gravityEnabled);
+          world.setGravityEnabled(data.gravityEnabled);
         }
         draw();
       } catch (error) {
