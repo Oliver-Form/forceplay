@@ -98,6 +98,13 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
   const [gravityEnabled, setGravityEnabled] = useState(world.useGravity);
   const [showCoordinateModal, setShowCoordinateModal] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const tutorialTexts = [
+    'Welcome to ForcePlay! This interactive canvas lets you create and manipulate particles to explore physics concepts.',
+    'Use the Slope and Rope tools above to connect particles and observe forces like tension and collision.',
+    'Click and drag particles to fling them around. Toggle gravity and adjust restitution in Settings for different behaviors.',
+    'Save your setup to the Gallery or download it as JSON. Share feedback to help us improve your experience!'
+  ];
+  const [tutorialStep, setTutorialStep] = useState(0);
   const [coordinateInputs, setCoordinateInputs] = useState({ startX: 0, startY: 0, endX: 0, endY: 0 });
   const [heritageError, setHeritageError] = useState<boolean>(false);
   // Editing data for inline particle attribute form
@@ -1120,8 +1127,24 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
               }}>
                 <h3>Tutorial</h3>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                <button onClick={() => setShowTutorialModal(false)}>Close</button>
+                <p>{tutorialTexts[tutorialStep]}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
+                  <button
+                    onClick={() => setTutorialStep((prev) => Math.max(0, prev - 1))}
+                    disabled={tutorialStep === 0}
+                    style={{ padding: '8px 16px', cursor: 'pointer', background: '#555', color: '#fff', border: 'none', borderRadius: '4px' }}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setTutorialStep((prev) => Math.min(tutorialTexts.length - 1, prev + 1))}
+                    disabled={tutorialStep === tutorialTexts.length - 1}
+                    style={{ padding: '8px 16px', cursor: 'pointer', background: '#555', color: '#fff', border: 'none', borderRadius: '4px' }}
+                  >
+                    Next
+                  </button>
+                </div>
+                <button onClick={() => setShowTutorialModal(false)} style={{ marginTop: '8px' }}>Close</button>
               </div>
             </div>
           )}
@@ -1294,3 +1317,4 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     </div>
   );
 }
+
