@@ -934,63 +934,29 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
         {/* Main canvas and upper controls panel */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px', boxSizing: 'border-box' }}>
           <div style={{ backgroundColor: '#1E1E2F', padding: '8px', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)', marginBottom: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <button
-                  onClick={handleSlopeButtonClick}
-                  style={{
-                    backgroundColor: slopeMode ? 'lightblue' : 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                  }}
-                >
-                  <img
-                    src="/slope.svg"
-                    alt="Add Slope"
-                    style={{ width: '24px', height: '24px' }}
-                  />
-                </button>
-                <button
-                  onClick={handleRopeButtonClick}
-                  style={{
-                    backgroundColor: ropeMode ? 'lightcoral' : 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                  }}
-                >
-                  <img
-                    src="/rope.svg"
-                    alt="Add Rope"
-                    style={{ width: '24px', height: '24px' }}
-                  />
-                </button>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button onClick={() => setShowSettingsModal(true)} style={{ cursor: 'pointer', padding: '4px 8px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px' }}>
-                  Settings
-                </button>
-                <button onClick={() => router.push('/feedback')} style={{ cursor: 'pointer', padding: '4px 8px', background: '#ff9800', color: '#fff', border: 'none', borderRadius: '4px', marginLeft: '8px' }}>
-                  Give Feedback / Suggest Features
-                </button>
-                <button onClick={handleDownload} style={{ cursor: 'pointer', padding: '4px 8px', background: '#888', color: '#fff', border: 'none', borderRadius: '4px' }}>
-                  Download JSON
-                </button>
-                <label style={{ cursor: 'pointer', padding: '4px 8px', background: '#666', color: '#fff', border: 'none', borderRadius: '4px' }}>
-                  Upload JSON
-                  <input type="file" accept="application/json" onChange={handleUpload} style={{ display: 'none' }} />
-                </label>
-                <button onClick={() => router.push('/examples')} style={{ cursor: 'pointer', padding: '4px 8px', background: '#4caf50', color: '#fff', border: 'none', borderRadius: '4px' }}>
-                  View Gallery
-                </button>
-                <button onClick={handleSaveExample} style={{ cursor: 'pointer', padding: '4px 8px', background: '#2196f3', color: '#fff', border: 'none', borderRadius: '4px' }}>
-                  Save to Gallery
-                </button>
-                <button onClick={() => setShowTutorialModal(true)} style={{ cursor: 'pointer', padding: '4px 8px', background: '#999', color: '#fff', border: 'none', borderRadius: '4px' }}>
-                  Tutorial
-                </button>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
+              <button onClick={() => setShowSettingsModal(true)} style={{ cursor: 'pointer', padding: '4px 8px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                Settings
+              </button>
+              <button onClick={() => router.push('/feedback')} style={{ cursor: 'pointer', padding: '4px 8px', background: '#ff9800', color: '#fff', border: 'none', borderRadius: '4px', marginLeft: '8px' }}>
+                Give Feedback / Suggest Features
+              </button>
+              <button onClick={handleDownload} style={{ cursor: 'pointer', padding: '4px 8px', background: '#888', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                Download JSON
+              </button>
+              <label style={{ cursor: 'pointer', padding: '4px 8px', background: '#666', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                Upload JSON
+                <input type="file" accept="application/json" onChange={handleUpload} style={{ display: 'none' }} />
+              </label>
+              <button onClick={() => router.push('/examples')} style={{ cursor: 'pointer', padding: '4px 8px', background: '#4caf50', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                View Gallery
+              </button>
+              <button onClick={handleSaveExample} style={{ cursor: 'pointer', padding: '4px 8px', background: '#2196f3', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                Save to Gallery
+              </button>
+              <button onClick={() => setShowTutorialModal(true)} style={{ cursor: 'pointer', padding: '4px 8px', background: '#999', color: '#fff', border: 'none', borderRadius: '4px' }}>
+                Tutorial
+              </button>
             </div>
           </div>
 
@@ -1173,6 +1139,12 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
               width: canvasWidth,
             }}
           >
+            <button onClick={handleSlopeButtonClick} style={{ backgroundColor: slopeMode ? 'lightblue' : 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}>
+              <img src="/slope.svg" alt="Add Slope" style={{ width: '24px', height: '24px' }} />
+            </button>
+            <button onClick={handleRopeButtonClick} style={{ backgroundColor: ropeMode ? 'lightcoral' : 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}>
+              <img src="/rope.svg" alt="Add Rope" style={{ width: '24px', height: '24px' }} />
+            </button>
             <button onClick={() => setIsPlaying(!isPlaying)}>
               <img
                 src={isPlaying ? '/pause.svg' : '/play-button.svg'}
@@ -1183,6 +1155,7 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
             <p>N for new particle</p>
             <p>Space to play/pause</p>
             <p>Click on particle to edit its attributes</p>
+            <p>Drag particle to fling it</p>
           </div>
         </div>
       </div>
@@ -1317,4 +1290,3 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
     </div>
   );
 }
-
