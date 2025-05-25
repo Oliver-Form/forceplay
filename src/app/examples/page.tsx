@@ -52,13 +52,26 @@ function CanvasPreview({ data }: { data: any }) {
         ctx.stroke();
       });
     }
-    // draw particles
-    data.particles.forEach((p: any) => {
+    // draw particles with golden-angle coloring and glow
+    data.particles.forEach((p: any, i: number) => {
       const fy = origH - p.position.y;
       ctx.beginPath();
       ctx.arc(p.position.x, fy, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = 'cyan'; ctx.fill();
-      ctx.strokeStyle = 'cyan'; ctx.lineWidth = 2; ctx.stroke();
+      const golden = 137.508;
+      const hue = (i * golden) % 360;
+      // glow effect
+      ctx.save();
+      ctx.shadowColor = `hsl(${hue},70%,65%)`;
+      ctx.shadowBlur = 50;
+      ctx.fillStyle = `hsl(${hue},70%,65%)`;
+      ctx.fill();
+      ctx.restore();
+      // main fill and stroke
+      ctx.fillStyle = `hsl(${hue},70%,65%)`;
+      ctx.fill();
+      ctx.strokeStyle = `hsl(${hue},70%,45%)`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
     });
     ctx.restore();
   }, [data]);
