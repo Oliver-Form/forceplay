@@ -10,6 +10,10 @@ import TypewriterText from './TypewriterText';
 
 import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
 import homeData from './home.json'; // Import the default JSON file
+// @ts-ignore: no types for jsmediatags
+import jsmediatags from 'jsmediatags';
+// @ts-ignore no types for color-thief-browser
+import ColorThief from 'color-thief-browser';
 
 interface TypewriterTextProps {
   text: string;
@@ -28,6 +32,8 @@ const world = new World();
 export default function WorldCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  // color palette from album art (bars, particles, fling)
+  const [palette, setPalette] = useState<string[]>(['#00ffff', '#00ffff', '#ffff00']);
   const [frameTick, setFrameTick] = useState(0);
   const [highlightedSlope, setHighlightedSlope] = useState<number | null>(null);
   const [scale, setScale] = useState(1);
@@ -119,13 +125,16 @@ export default function WorldCanvas() {
       const barWidth = virtualWidth / barCount;
       const centerX = virtualWidth / 2;
       for (let i = 0; i < half; i++) {
+        // compute amplitude and height for this bar
         const start = Math.floor(i * freqData.length / half);
         const end = Math.floor((i + 1) * freqData.length / half);
         let sum = 0;
         for (let j = start; j < end; j++) sum += freqData[j];
         const amplitude = sum / (end - start);
         const height = (amplitude / 255) * virtualHeight;
-        ctx.fillStyle = 'cyan';
+        // pick palette color based on bar index
+        const colorIndex = Math.floor(i * palette.length / half);
+        ctx.fillStyle = palette[colorIndex] || '#00ffff';
         const xLeft = centerX - (i + 1) * barWidth;
         const xRight = centerX + i * barWidth;
         ctx.fillRect(xLeft, virtualHeight - height, barWidth - 2, height);
@@ -161,15 +170,15 @@ export default function WorldCanvas() {
       ctx.arc(p.position.x, flippedY, particleRadius, 0, 2 * Math.PI);
       // Neon glow effect
       ctx.save();
-      ctx.shadowColor = 'cyan';
+      ctx.shadowColor = palette[0] || '#00ffff';
       ctx.shadowBlur = 50;
-      ctx.fillStyle = 'cyan';
+      ctx.fillStyle = palette[0] || '#00ffff';
       ctx.fill();
       ctx.restore();
 
-      ctx.fillStyle = 'cyan'; // Set circle color to cyan (main fill)
+      ctx.fillStyle = palette[0] || '#00ffff'; // Set circle color to cyan (main fill)
       ctx.fill();
-      ctx.strokeStyle = 'cyan';
+      ctx.strokeStyle = palette[1] || palette[0] || '#00ffff';
       ctx.lineWidth = 2;
       ctx.stroke();
 
@@ -179,7 +188,7 @@ export default function WorldCanvas() {
         ctx.beginPath();
         ctx.moveTo(dragParticle.position.x, virtualHeight - dragParticle.position.y);
         ctx.lineTo(dragCurrent.x, virtualHeight - dragCurrent.y);
-        ctx.strokeStyle = 'yellow';
+        ctx.strokeStyle = palette[2] || '#ffff00';
         ctx.lineWidth = 2;
         ctx.setLineDash([5,5]);
         ctx.stroke();
@@ -326,6 +335,37 @@ export default function WorldCanvas() {
   const handleAudioFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // read ID3 tags and extract album art palette
+    jsmediatags.read(file, {
+      onSuccess: async (tag: any) => {
+        const title = tag.tags.title || '';
+        const artist = tag.tags.artist || '';
+        const query = encodeURIComponent(`${artist} ${title}`);
+        try {
+          // step 3: get access_token from our server
+          const tokRes = await fetch('/api/spotify-token');
+          const { access_token } = await tokRes.json();
+          const res = await fetch(
+            `https://api.spotify.com/v1/search?q=${query}&type=track&limit=1`,
+            { headers: { Authorization: `Bearer ${access_token}` } }
+          );
+           const data = await res.json();
+           const art = data.tracks?.items[0]?.album?.images[0]?.url;
+           console.log('Album art URL:', art);
+           if (art) {
+             const img = new Image(); img.crossOrigin = 'anonymous'; img.src = art;
+             img.onload = () => {
+               const ct = new ColorThief();
+               const cols = ct.getPalette(img, 3)
+                 .map((rgb: number[]) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
+               if (cols.length) setPalette(cols);
+             };
+           }
+         } catch {}
+      },
+      onError: (_: any) => {}
+    });
+
     try {
       const arrayBuffer = await file.arrayBuffer();
       const AudioCtxCtor = window.AudioContext || (window as any).webkitAudioContext;
