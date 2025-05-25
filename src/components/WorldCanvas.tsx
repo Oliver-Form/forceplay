@@ -662,10 +662,8 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
           world.step(1 / 30); // faster sim
         }
         draw();
-        // Only trigger React re-render if attributes table is visible
-        if (showAttributesTable) {
-          setFrameTick((tick) => tick + 1);
-        }
+        // Trigger React re-render on every frame to update live editing form
+        setFrameTick((tick) => tick + 1);
       }
 
       animationFrame = requestAnimationFrame(loop);
@@ -745,6 +743,19 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
       setAngularSpeed(0);
     }
   }, [selectedParticle]);
+
+  // Sync live selectedParticle values into editing form every frame tick
+  useEffect(() => {
+    if (selectedParticle) {
+      setEditingData({
+        position: { x: selectedParticle.position.x, y: selectedParticle.position.y },
+        velocity: { x: selectedParticle.velocity.x, y: selectedParticle.velocity.y },
+        mass: selectedParticle.mass,
+        appliedForce: { x: selectedParticle.appliedForce.x, y: selectedParticle.appliedForce.y },
+        isStationary: selectedParticle.isStationary,
+      });
+    }
+  }, [frameTick, selectedParticle]);
 
   // Save current world as example
   const handleSaveExample = async () => {
