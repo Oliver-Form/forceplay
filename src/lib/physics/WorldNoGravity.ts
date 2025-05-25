@@ -1,4 +1,4 @@
-  import { Particle } from './Particle';
+import { Particle } from './Particle';
   import { Vector2D } from './VectorFunctions';
 
   export class WorldNoGravity {
@@ -23,7 +23,8 @@
     step(dt: number) {
       for (const p of this.particles) {
         if (!p.isStationary) {
-          const gravity = new Vector2D(0, 0 * p.mass);
+          // apply gravitational force downward (9.8 m/s²)
+          const gravity = new Vector2D(0, -9.8 * p.mass);
           const netForce = gravity.add(p.appliedForce);
           const acceleration = netForce.scale(1 / p.mass);
           p.velocity = p.velocity.add(acceleration.scale(dt));

@@ -177,8 +177,9 @@ import { Particle } from './Particle';
       }
 
       const r = 10;
-      const maxX = 1900;
-      const maxY = 700;
+      // use canvas virtual dimensions to set boundaries
+      const maxX = 1920;
+      const maxY = 1030;
 
       for (const p of this.particles) {
         if (p.position.x - r < 0) {
