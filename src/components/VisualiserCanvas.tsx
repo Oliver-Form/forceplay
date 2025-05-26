@@ -30,6 +30,22 @@ const particleRadius = 10;
 const world = new World();
 
 export default function WorldCanvas() {
+  // refs for audio element and playback stats
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [artUrl, setArtUrl] = useState<string | null>(null);
+  // update currentTime via animation frame
+  useEffect(() => {
+    let rafId: number;
+    const update = () => {
+      if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+      rafId = requestAnimationFrame(update);
+    };
+    update();
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   // color palette from album art (bars, particles, fling)
@@ -117,7 +133,6 @@ export default function WorldCanvas() {
       analyserRef.current.getByteFrequencyData(freqDataRef.current);
       freqData = freqDataRef.current;
     }
-
     // draw mirrored bars if freqData exists
     if (freqData) {
       const barCount = 64;
@@ -254,7 +269,7 @@ export default function WorldCanvas() {
  
   useEffect(() => {
     let animationFrame: number;
-
+// need to get those numbers up
     const loop = () => {
       if (isPlaying) {
         // dynamic bar slopes for collisions
@@ -335,7 +350,34 @@ export default function WorldCanvas() {
   const handleAudioFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // read ID3 tags and extract album art palette
+
+    const url = URL.createObjectURL(file);
+    if (audioRef.current) {
+      audioRef.current.src = url;
+      audioRef.current.onloadedmetadata = () => setDuration(audioRef.current!.duration);
+
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtxRef.current = audioCtx;
+      const source = audioCtx.createMediaElementSource(audioRef.current);
+      // Create analyser node for visualization
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
+
+      // Connect source directly to analyser and output
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+
+       analyserRef.current = analyser;
+       freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+
+      audioRef.current.play();
+      setIsPlaying(true);
+      setAudioEnabled(true);
+    }
+    // existing ID3 + color-thief handling...
     jsmediatags.read(file, {
       onSuccess: async (tag: any) => {
         const title = tag.tags.title || '';
@@ -365,40 +407,14 @@ export default function WorldCanvas() {
       },
       onError: (_: any) => {}
     });
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const AudioCtxCtor = window.AudioContext || (window as any).webkitAudioContext;
-      const audioCtx = new AudioCtxCtor();
-      audioCtxRef.current = audioCtx;
-      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-      const source = audioCtx.createBufferSource();
-      source.buffer = audioBuffer;
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 2048;
-      source.connect(analyser).connect(audioCtx.destination);
-      analyserRef.current = analyser;
-      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
-      source.start();
-      sourceRef.current = source;
-      setAudioEnabled(true);
-    } catch (err) {
-      console.error('Error loading audio file:', err);
-    }
   };
-
-  // spawn new particle on 'n' key
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'n') {
-        const p = new Particle(virtualWidth/2, virtualHeight/2, 0, 0, 1);
-        world.addParticle(p);
-        draw();
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+  // handle play/pause toggle
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (audioRef.current.paused) audioRef.current.play();
+    else audioRef.current.pause();
+    setIsPlaying(!audioRef.current.paused);
+  };
 
   // mouse handlers for drag/fling
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -447,11 +463,16 @@ export default function WorldCanvas() {
   };
 
   return (
-  <div style={{ position: 'relative' }}>
-    {/* Audio enable button overlay */}
-    {!audioEnabled && (
-      <input type="file" accept="audio/*" onChange={handleAudioFileUpload} style={{ position: 'absolute', zIndex: 10, top: 10, left: 10, cursor: 'pointer' }} />
-    )}
+    <div style={{ position: 'relative' }}>
+      {/* Hidden audio element for playback */}
+      <audio ref={audioRef} style={{ display: 'none' }} />
+      {/* Persistent controls overlay */}
+      <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 20, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.5)', padding: '6px 10px', borderRadius: 4 }}>
+        <button onClick={togglePlay} style={{ color: '#fff' }}>{isPlaying ? 'Pause' : 'Play'}</button>
+        <input type="file" accept="audio/*" onChange={handleAudioFileUpload} />
+        <progress value={currentTime} max={duration} style={{ width: 160 }} />
+        <span style={{ color: '#fff' }}>{Math.floor(currentTime)}/{Math.floor(duration)}s</span>
+      </div>
 
     <div
       style={{
@@ -494,3 +515,4 @@ export default function WorldCanvas() {
   </div>
 );
 }
+//

@@ -3,14 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.7",
-    "color-thief-browser": "^2.0.2",
     "file-saver": "^2.0.5",
     "jsmediatags": "^3.9.7",
     "next": "15.3.2",
