@@ -5,6 +5,16 @@ import { Particle } from './Particle';
   // Removed global const e in favor of instance property
 
   export class World {
+    // dynamic bars for rectangle collisions (x, width, height)
+    bars: Array<{ x: number; width: number; height: number }> = [];
+
+    /**
+     * Set dynamic bars for rectangle collisions
+     */
+    setBars(bars: Array<{ x: number; width: number; height: number }>) {
+      this.bars = bars;
+    }
+
     restitution: number;
     useGravity: boolean = true; // gravity enabled flag
     /**
@@ -74,49 +84,58 @@ import { Particle } from './Particle';
           p.position.y += p.velocity.y * dt;
           // Apply energy correction
           p.correctEnergy(g);
+          // Bar collision (circle-rectangle) per substep
+          for (const bar of this.bars) {
+            // check horizontal overlap with rectangle extended by radius
+            const left = bar.x - p.radius;
+            const right = bar.x + bar.width + p.radius;
+            if (p.position.x >= left && p.position.x <= right) {
+              // vertical penetration into bar
+              const penetration = bar.height - (p.position.y - p.radius);
+              if (penetration > 0) {
+                // lift particle out of bar
+                p.position.y += penetration;
+                // reflect vertical velocity with restitution
+                if (p.velocity.y < 0) {
+                  p.velocity.y = -p.velocity.y * this.restitution;
+                }
+              }
+            }
+          }
 
-          // Check for collisions with slopes
+          // Check for collisions with slopes (circle-segment collision)
           for (const slope of this.slopes) {
-            const dx = slope.end.x - slope.start.x;
-            const dy = slope.end.y - slope.start.y;
-            const lengthSquared = dx * dx + dy * dy;
-
-            if (lengthSquared === 0) continue; // Skip degenerate slopes
-
-            const t = ((p.position.x - slope.start.x) * dx + (p.position.y - slope.start.y) * dy) / lengthSquared;
-            const clampedT = Math.max(0, Math.min(1, t));
-
-            const closestX = slope.start.x + clampedT * dx;
-            const closestY = slope.start.y + clampedT * dy;
-
-            const distanceSquared = (p.position.x - closestX) ** 2 + (p.position.y - closestY) ** 2;
-            const radiusSquared = 10 ** 2; // Particle radius squared
-
-            if (distanceSquared < radiusSquared) {
-              const normalX = p.position.x - closestX;
-              const normalY = p.position.y - closestY;
-              const normalLength = Math.sqrt(normalX * normalX + normalY * normalY);
-
-              if (normalLength === 0) continue; // Skip if normal is zero
-
-              const nx = normalX / normalLength;
-              const ny = normalY / normalLength;
-
-              const relativeVelocityX = p.velocity.x;
-              const relativeVelocityY = p.velocity.y;
-              const dotProduct = relativeVelocityX * nx + relativeVelocityY * ny;
-
-              if (dotProduct < 0) {
-                const restitution = 0.8; // Coefficient of restitution
-                const impulse = -(1 + restitution) * dotProduct;
-
-                p.velocity.x += impulse * nx;
-                p.velocity.y += impulse * ny;
-
-                // Resolve overlap
-                const overlap = 10 - Math.sqrt(distanceSquared);
-                p.position.x += overlap * nx;
-                p.position.y += overlap * ny;
+            const sx = slope.start.x;
+            const sy = slope.start.y;
+            const ex = slope.end.x;
+            const ey = slope.end.y;
+            const dx = ex - sx;
+            const dy = ey - sy;
+            const len2 = dx * dx + dy * dy;
+            if (len2 === 0) continue;
+            // Project particle center onto segment
+            const t = ((p.position.x - sx) * dx + (p.position.y - sy) * dy) / len2;
+            const tClamped = Math.max(0, Math.min(1, t));
+            const cx = sx + tClamped * dx;
+            const cy = sy + tClamped * dy;
+            const nxPart = p.position.x - cx;
+            const nyPart = p.position.y - cy;
+            const dist2 = nxPart * nxPart + nyPart * nyPart;
+            const r = p.radius;
+            if (dist2 < r * r) {
+              const dist = Math.sqrt(dist2) || 1;
+              const nx = nxPart / dist;
+              const ny = nyPart / dist;
+              const vDotN = p.velocity.x * nx + p.velocity.y * ny;
+              if (vDotN < 0) {
+                // Correct position to avoid overlap
+                const penetration = r - dist;
+                p.position.x += nx * penetration;
+                p.position.y += ny * penetration;
+                // Reflect velocity
+                const e = this.restitution;
+                p.velocity.x -= (1 + e) * vDotN * nx;
+                p.velocity.y -= (1 + e) * vDotN * ny;
               }
             }
           }

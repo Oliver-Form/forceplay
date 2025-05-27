@@ -276,30 +276,28 @@ export default function WorldCanvas() {
  
   useEffect(() => {
     let animationFrame: number;
-// need to get those numbers up
     const loop = () => {
       if (isPlaying) {
-        // dynamic bar slopes for collisions
+        // manual bar collisions for audio bars (improves performance vs slopes)
+        const bars: Array<{ x: number; width: number; height: number }> = [];
         if (audioEnabled && analyserRef.current && freqDataRef.current) {
-          // compute bar segments as horizontal slopes
           const freqData = freqDataRef.current;
           const barCount = 64;
           const half = barCount / 2;
           const barWidth = virtualWidth / barCount;
           const centerX = virtualWidth / 2;
-          const dynamicSlopes: Array<{start: Vector2D; end: Vector2D}> = [];
           for (let i = 0; i < half; i++) {
-            // left bar
-            const heightL = (freqData.slice(Math.floor(i*freqData.length/half), Math.floor((i+1)*freqData.length/half)).reduce((a,b)=>a+b,0)/(freqData.length/half))/255 * virtualHeight;
-            const xL = centerX - (i+1)*barWidth;
-            dynamicSlopes.push({ start: new Vector2D(xL, heightL), end: new Vector2D(xL+barWidth, heightL) });
-            // right bar
-            const heightR = heightL;
-            const xR = centerX + i*barWidth;
-            dynamicSlopes.push({ start: new Vector2D(xR, heightR), end: new Vector2D(xR+barWidth, heightR) });
+            const startIdx = Math.floor(i * freqData.length / half);
+            const endIdx = Math.floor((i + 1) * freqData.length / half);
+            let sum = 0;
+            for (let j = startIdx; j < endIdx; j++) sum += freqData[j];
+            const amplitude = sum / (endIdx - startIdx);
+            const height = (amplitude / 255) * virtualHeight;
+            const xLeft = centerX - (i + 1) * barWidth;
+            bars.push({ x: xLeft, width: barWidth, height });
+            const xRight = centerX + i * barWidth;
+            bars.push({ x: xRight, width: barWidth, height });
           }
-          // inject dynamic slopes
-          world.slopes = world.slopes.slice(0, staticSlopesCount.current).concat(dynamicSlopes);
         }
 
         // fixed sub-steps for collision accuracy
@@ -308,6 +306,22 @@ export default function WorldCanvas() {
         const subDt = dt / subSteps;
         for (let i = 0; i < subSteps; i++) {
           world.step(subDt);
+        }
+        // resolve bar collisions after physics
+        for (const p of world.particles) {
+          for (const bar of bars) {
+            if (p.position.x >= bar.x && p.position.x <= bar.x + bar.width) {
+              const penetration = (bar.height + particleRadius) - p.position.y;
+              if (penetration > 0) {
+                // lift particle above bar
+                p.position.y += penetration;
+                // reflect vertical velocity
+                if (p.velocity.y < 0) {
+                  p.velocity.y = -p.velocity.y * world.restitution;
+                }
+              }
+            }
+          }
         }
         draw();
       }
