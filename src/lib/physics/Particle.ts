@@ -1,6 +1,10 @@
 import { Vector2D } from './VectorFunctions';
 
 export class Particle {
+  // age of particle in seconds
+  age: number = 0;
+  // lifetime of particle in seconds (default infinite)
+  lifetime: number = Infinity;
   position: Vector2D;
   velocity: Vector2D;
   mass: number;
@@ -49,6 +53,8 @@ export class Particle {
   }
 
   update(dt: number) {
+    // accumulate age and handle expiration elsewhere
+    this.age += dt;
     if (this.isStationary) {
       // Keep static particles unaffected
       this.velocity.x = 0;
@@ -78,3 +84,5 @@ export class Particle {
     this.correctEnergy(9.8);
   }
 }
+
+// 

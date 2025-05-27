@@ -14,6 +14,8 @@ import homeData from './home.json'; // Import the default JSON file
 import jsmediatags from 'jsmediatags';
 // @ts-ignore no types for color-thief-browser
 import ColorThief from 'color-thief-browser';
+// @ts-ignore: no types for music-tempo
+import MusicTempo from 'music-tempo';
 
 interface TypewriterTextProps {
   text: string;
@@ -25,12 +27,15 @@ interface TypewriterTextProps {
 const virtualWidth = 1920;
 const virtualHeight = 1030;
 const particleRadius = 10;
+// upper limit for active particles
 
 // declare instance of World object
 const world = new World();
 
 export default function WorldCanvas() {
   // refs for audio element and playback stats
+  const [beatInterval, setBeatInterval] = useState<number|null>(null);
+  const lastBeatRef = useRef<number>(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -71,6 +76,7 @@ export default function WorldCanvas() {
 
   // remember original static slopes count
   const staticSlopesCount = useRef(world.slopes.length);
+  const prevAmpRef = useRef<number>(0);
 
   const handleCanvasRightClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
@@ -278,6 +284,22 @@ export default function WorldCanvas() {
     let animationFrame: number;
     const loop = () => {
       if (isPlaying) {
+        // beat-synced spawning
+        if (audioEnabled && beatInterval && audioRef.current) {
+          const now = audioRef.current.currentTime;
+          if (now - lastBeatRef.current >= beatInterval) {
+            lastBeatRef.current = now;
+            const count = 1;  // one particle per beat now
+            const centerX = virtualWidth/2, centerY = virtualHeight/2;
+            for (let i = 0; i < count; i++) {
+              const angle = Math.random() * Math.PI * 2;
+              const speed = 15 * (0.5 + Math.random());
+              const p = new Particle(centerX, centerY, Math.cos(angle)*speed, Math.sin(angle)*speed, 1, Math.random()*6+4);
+              p.lifetime = 1 + Math.random()*2;
+              world.addParticle(p);
+            }
+          }
+        }
         // manual bar collisions for audio bars (improves performance vs slopes)
         const bars: Array<{ x: number; width: number; height: number }> = [];
         if (audioEnabled && analyserRef.current && freqDataRef.current) {
@@ -323,6 +345,10 @@ export default function WorldCanvas() {
             }
           }
         }
+        // remove expired particles
+        world.particles = world.particles.filter(p => p.age < p.lifetime);
+        // remove particles off the left/right walls
+        world.particles = world.particles.filter(p => p.position.x >= -p.radius && p.position.x <= virtualWidth + p.radius);
         draw();
       }
 
@@ -371,6 +397,15 @@ export default function WorldCanvas() {
   const handleAudioFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // decode audio for BPM detection
+    const arrayBuffer = await file.arrayBuffer();
+    const tempCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+    const signal = audioBuffer.getChannelData(0);
+    const mt = new MusicTempo(signal, { timeStep: 1 / audioBuffer.sampleRate });
+    console.log(`Detected BPM: ${mt.tempo}`);
+    // use the detected inter-beat interval in seconds
+    setBeatInterval(mt.beatInterval);
 
     const url = URL.createObjectURL(file);
     if (audioRef.current) {

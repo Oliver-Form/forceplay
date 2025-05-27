@@ -195,25 +195,16 @@ import { Particle } from './Particle';
         }
       }
 
-      const r = 10;
-      // use canvas virtual dimensions to set boundaries
-      const maxX = 1920;
+      // World boundaries: allow horizontal off-screen removal; enforce only vertical bounce
       const maxY = 1030;
-
       for (const p of this.particles) {
-        if (p.position.x - r < 0) {
-          p.position.x = r;
-          p.velocity.x *= -this.restitution;
-        }
-        if (p.position.x + r > maxX) {
-          p.position.x = maxX - r;
-          p.velocity.x *= -this.restitution;
-        }
-
+        const r = p.radius;
+        // bottom boundary
         if (p.position.y - r < 0) {
           p.position.y = r;
           p.velocity.y *= -this.restitution;
         }
+        // top boundary
         if (p.position.y + r > maxY) {
           p.position.y = maxY - r;
           p.velocity.y *= -this.restitution;
