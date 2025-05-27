@@ -106,6 +106,13 @@ export default function WorldCanvas() {
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    // Press 'n' to spawn a new particle at the top centre
+    if (e.key.toLowerCase() === 'n') {
+      const newParticle = new Particle(virtualWidth / 2, virtualHeight, 0, 0, 1);
+      world.addParticle(newParticle);
+      draw();
+      return;
+    }
     if (e.key === 'Delete' && highlightedSlope !== null) {
       world.slopes.splice(highlightedSlope, 1);
       setHighlightedSlope(null);
@@ -410,10 +417,18 @@ export default function WorldCanvas() {
   };
   // handle play/pause toggle
   const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (audioRef.current.paused) audioRef.current.play();
-    else audioRef.current.pause();
-    setIsPlaying(!audioRef.current.paused);
+    // Only toggle if audio element exists and a source is loaded
+    if (!audioRef.current || !audioEnabled) return;
+    try {
+      if (audioRef.current.paused) {
+        audioRef.current.play().catch(() => {});
+      } else {
+        audioRef.current.pause();
+      }
+      setIsPlaying(!audioRef.current.paused);
+    } catch {
+      // suppress errors when no media resource is available
+    }
   };
 
   // mouse handlers for drag/fling

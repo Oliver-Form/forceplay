@@ -125,6 +125,25 @@ export default function WorldCanvas() {
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    // Press 'n' to create a new particle at the top centre
+    if (e.key.toLowerCase() === 'n') {
+      const color = getRandomParticleColor();
+      const particle = new Particle(
+        virtualWidth / 2,
+        virtualHeight,
+        0,
+        0,
+        1,
+        getRandomRadius()
+      );
+      particle._fxColor = { fill: color.fill, glow: color.glow };
+      particle._phase = Math.random() * Math.PI * 2;
+      particle._isHighlight = !!color.highlight;
+      world.addParticle(particle);
+      draw();
+      return;
+    }
+
     if (e.key === 'Delete' && highlightedSlope !== null) {
       world.slopes.splice(highlightedSlope, 1);
       setHighlightedSlope(null);
