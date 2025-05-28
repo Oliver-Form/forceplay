@@ -1302,4 +1302,3 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
   );
 }
 
-// 

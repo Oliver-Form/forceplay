@@ -1,9 +1,8 @@
 'use client';
 
 // imports for the project
-import Link from 'next/link';
 import React, { useRef, useEffect, useState, RefObject } from 'react';
-import { World } from '../lib/physics/World';
+import { World } from '../lib/physics/WorldVisualiser';
 import { Particle } from '../lib/physics/Particle';
 import { Vector2D } from '../lib/physics/VectorFunctions';
 

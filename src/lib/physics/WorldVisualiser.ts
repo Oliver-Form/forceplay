@@ -195,9 +195,8 @@ import { Particle } from './Particle';
         }
       }
 
-      // World boundaries: enforce bounce on all boundaries
-      const maxY = 700;
-      const maxX = 1900;
+      // World boundaries: allow horizontal off-screen removal; enforce only vertical bounce
+      const maxY = 1030;
       for (const p of this.particles) {
         const r = p.radius;
         // bottom boundary
@@ -209,16 +208,6 @@ import { Particle } from './Particle';
         if (p.position.y + r > maxY) {
           p.position.y = maxY - r;
           p.velocity.y *= -this.restitution;
-        }
-        // left boundary
-        if (p.position.x - r < 0) {
-          p.position.x = r;
-          p.velocity.x *= -this.restitution;
-        }
-        // right boundary
-        if (p.position.x + r > maxX) {
-          p.position.x = maxX - r;
-          p.velocity.x *= -this.restitution;
         }
       }
 
