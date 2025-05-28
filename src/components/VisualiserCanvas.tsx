@@ -358,7 +358,7 @@ export default function WorldCanvas() {
 
     animationFrame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrame);
-  }, [isPlaying, audioEnabled, palette]); // <-- added palette here
+  }, [isPlaying, audioEnabled, palette, beatInterval]); // <-- added beatInterval here
 
   useEffect(() => {
     const handleSpace = (e: KeyboardEvent) => {
@@ -431,6 +431,7 @@ export default function WorldCanvas() {
       audioRef.current.play();
       setIsPlaying(true);
       setAudioEnabled(true);
+      lastBeatRef.current = audioRef.current.currentTime;   // <-- reset beat timer for new song
     }
     // existing ID3 + color-thief handling...
     jsmediatags.read(file, {
@@ -584,4 +585,3 @@ export default function WorldCanvas() {
 );
 }
 
-//
