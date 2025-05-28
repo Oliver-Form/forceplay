@@ -22,7 +22,8 @@ export class Particle {
   constructor(x: number, y: number, vx = 0, vy = 0, mass = 1, radius = 10) {
     this.position = new Vector2D(x, y);
     this.velocity = new Vector2D(vx, vy);
-    this.mass = mass;
+    // Ensure mass is always positive
+    this.mass = mass > 0 ? mass : 0.001;
     this.radius = radius;
     this.initialEnergy = 0.5 * mass * (vx ** 2 + vy ** 2) + mass * 9.8 * y; // Initialize total energy
   }
@@ -53,6 +54,8 @@ export class Particle {
   }
 
   update(dt: number) {
+    // Ensure mass stays positive to avoid division by zero or negative mass
+    this.mass = this.mass > 0 ? this.mass : 0.001;
     // accumulate age and handle expiration elsewhere
     this.age += dt;
     if (this.isStationary) {
@@ -85,4 +88,4 @@ export class Particle {
   }
 }
 
-// 
+//
