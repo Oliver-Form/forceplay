@@ -6,10 +6,9 @@ import React, { useRef, useEffect, useState, RefObject } from 'react';
 import { World } from '../lib/physics/World';
 import { Particle } from '../lib/physics/Particle';
 import { Vector2D } from '../lib/physics/VectorFunctions';
-import TypewriterText from './TypewriterText';
 
 import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
-import homeData from './home.json'; // Import the default JSON file
+
 // @ts-ignore: no types for jsmediatags
 import jsmediatags from 'jsmediatags';
 // @ts-ignore no types for color-thief-browser
@@ -279,7 +278,7 @@ export default function WorldCanvas() {
     reader.readAsText(file);
   };
   // Animation loop
- 
+
   useEffect(() => {
     let animationFrame: number;
     const loop = () => {
@@ -359,7 +358,7 @@ export default function WorldCanvas() {
 
     animationFrame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrame);
-  }, [isPlaying, audioEnabled]);
+  }, [isPlaying, audioEnabled, palette]); // <-- added palette here
 
   useEffect(() => {
     const handleSpace = (e: KeyboardEvent) => {
@@ -451,12 +450,17 @@ export default function WorldCanvas() {
            const art = data.tracks?.items[0]?.album?.images[0]?.url;
            console.log('Album art URL:', art);
            if (art) {
-             const img = new Image(); img.crossOrigin = 'anonymous'; img.src = art;
+             const img = new Image();
+             img.crossOrigin = 'anonymous';
+             img.src = art;
              img.onload = () => {
                const ct = new ColorThief();
                const cols = ct.getPalette(img, 3)
                  .map((rgb: number[]) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
-               if (cols.length) setPalette(cols);
+               if (cols.length) {
+                 setPalette(cols);
+                 draw();  // <-- immediately redraw with new palette
+               }
              };
            }
          } catch {}
@@ -580,3 +584,4 @@ export default function WorldCanvas() {
 );
 }
 
+//
