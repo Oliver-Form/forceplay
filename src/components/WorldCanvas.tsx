@@ -804,6 +804,21 @@ export default function WorldCanvas({ initialData }: WorldCanvasProps) {
                     return `${letter}${suffix}`;
                   })()}
                 </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedParticle) {
+                      world.particles = world.particles.filter(p => p !== selectedParticle);
+                      setSelectedParticle(null);
+                      setEditingData(null);
+                      setParticleForm(null);
+                      draw();
+                    }
+                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', marginBottom: '8px' }}
+                >
+                  <img src="/delete-button.svg" alt="Delete Particle" style={{ width: '24px', height: '24px' }} />
+                </button>
                 {/* Position X */}
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
                   <label style={{ flex: 1 }}>Position X:
