@@ -40,6 +40,10 @@ export default function WorldCanvas() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [artUrl, setArtUrl] = useState<string | null>(null);
+  // Playlist management
+  const [playlist, setPlaylist] = useState<File[]>([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
+
   // update currentTime via animation frame
   useEffect(() => {
     let rafId: number;
@@ -553,15 +557,143 @@ export default function WorldCanvas() {
     setHasDragged(false);
   };
 
+  // Load a track file into the audio element and setup analyser if needed
+  const loadTrack = (file: File) => {
+    const url = URL.createObjectURL(file);
+    if (!audioRef.current) return;
+    audioRef.current.src = url;
+    audioRef.current.onloadedmetadata = () => {
+      setDuration(audioRef.current!.duration);
+      setCurrentTime(audioRef.current!.currentTime);
+    };
+    // Setup audio context and analyser on first load
+    if (!audioCtxRef.current) {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtxRef.current = audioCtx;
+      const source = audioCtx.createMediaElementSource(audioRef.current);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      analyserRef.current = analyser;
+      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+    }
+    audioRef.current.play().catch(() => {});
+    setIsPlaying(true);
+    setAudioEnabled(true);
+    lastBeatRef.current = 0;
+  };
+
+  const prevTrack = () => {
+    if (playlist.length < 2) return;
+    const newIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+    setCurrentTrackIndex(newIndex);
+    loadTrack(playlist[newIndex]);
+  };
+
+  const nextTrack = () => {
+    if (playlist.length < 2) return;
+    const newIndex = (currentTrackIndex + 1) % playlist.length;
+    setCurrentTrackIndex(newIndex);
+    loadTrack(playlist[newIndex]);
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       {/* Hidden audio element for playback */}
       <audio ref={audioRef} style={{ display: 'none' }} />
       {/* Persistent controls overlay */}
       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 20, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.5)', padding: '6px 10px', borderRadius: 4 }}>
+        <button onClick={prevTrack} style={{ color: '#fff' }}>Prev</button>
         <button onClick={togglePlay} style={{ color: '#fff' }}>{isPlaying ? 'Pause' : 'Play'}</button>
-        <input type="file" accept="audio/*" onChange={handleAudioFileUpload} />
-        <progress value={currentTime} max={duration} style={{ width: 160 }} />
+        <button onClick={nextTrack} style={{ color: '#fff' }}>Next</button>
+        <input
+          type="file"
+          accept="audio/*"
+          multiple
+          onChange={(e) => {
+            const files = e.target.files;
+            if (!files) return;
+            const trackFiles = Array.from(files).sort((a, b) => a.name.localeCompare(b.name));
+            setPlaylist(trackFiles);
+            setCurrentTrackIndex(0);
+            loadTrack(trackFiles[0]);
+            // existing ID3 + color-thief handling for metadata
+            jsmediatags.read(trackFiles[0], {
+              onSuccess: async (tag: any) => {
+                const title = tag.tags.title || '';
+                const artist = tag.tags.artist || '';
+                const query = encodeURIComponent(`${artist} ${title}`);
+                try {
+                  // step 3: get access_token from our server
+                  const tokRes = await fetch('/api/spotify-token');
+                  const { access_token } = await tokRes.json();
+                  const res = await fetch(
+                    `https://api.spotify.com/v1/search?q=${query}&type=track&limit=1`,
+                    { headers: { Authorization: `Bearer ${access_token}` } }
+                  );
+                   const data = await res.json();
+                   console.log('Spotify Search Response:', data);
+                   const track = data.tracks?.items?.[0];
+                   if (!track) {
+                     console.warn('No track found for query', query);
+                   } else {
+                     console.log('Found track ID:', track.id);
+                   }
+                   const art = track?.album?.images[0]?.url;
+                   // fetch tempo via Spotify audio-features
+                   const trackId = track?.id;
+                   if (trackId) {
+                     const featRes = await fetch(
+                       `https://api.spotify.com/v1/audio-features/${trackId}`,
+                       { headers: { Authorization: `Bearer ${access_token}` } }
+                     );
+                     const features = await featRes.json();
+                     console.log('Audio Features Response:', features);
+                     if (features && typeof features.tempo === 'number') {
+                       console.log(`Detected BPM: ${features.tempo}`);
+                       setBeatInterval(60 / features.tempo);
+                     } else {
+                       console.warn('Spotify audio-features returned no tempo property', features);
+                     }
+                   }
+                   console.log('Album art URL:', art);
+                   if (art) {
+                     const img = new Image();
+                     img.crossOrigin = 'anonymous';
+                     img.src = art;
+                     img.onload = () => {
+                       const ct = new ColorThief();
+                       const cols = ct.getPalette(img, 3)
+                         .map((rgb: number[]) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
+                       if (cols.length) {
+                         setPalette(cols);
+                         draw();  // <-- immediately redraw with new palette
+                       }
+                     };
+                   }
+                 } catch {}
+              },
+              onError: (_: any) => {}
+            });
+          }}
+        />
+        <input
+          type="range"
+          value={currentTime}
+          min={0}
+          max={duration}
+          step={0.1}
+          onChange={(e) => {
+            const t = parseFloat(e.target.value);
+            if (audioRef.current) audioRef.current.currentTime = t;
+            setCurrentTime(t);
+          }}
+          style={{ width: 160 }}
+        />
         <span style={{ color: '#fff' }}>{Math.floor(currentTime)}/{Math.floor(duration)}s</span>
       </div>
 
@@ -607,3 +739,4 @@ export default function WorldCanvas() {
 );
 }
 
+//
