@@ -12,8 +12,6 @@ import { saveAs } from 'file-saver'; // Import file-saver for downloading JSON
 import jsmediatags from 'jsmediatags';
 // @ts-ignore no types for color-thief-browser
 import ColorThief from 'color-thief-browser';
-// @ts-ignore: no types for music-tempo
-import MusicTempo from 'music-tempo';
 
 interface TypewriterTextProps {
   text: string;
@@ -26,6 +24,10 @@ const virtualWidth = 1920;
 const virtualHeight = 1030;
 const particleRadius = 10;
 // upper limit for active particles
+
+// Fixed spawn rate: 100 particles per minute
+const FIXED_PARTICLES_PER_MINUTE = 100;
+const FIXED_SPAWN_INTERVAL = 60 / FIXED_PARTICLES_PER_MINUTE; // seconds between spawns
 
 // declare instance of World object
 const world = new World();
@@ -282,22 +284,29 @@ export default function WorldCanvas() {
     let animationFrame: number;
     const loop = () => {
       if (isPlaying) {
-        // beat-synced spawning
-        if (audioEnabled && beatInterval && audioRef.current) {
-          const now = audioRef.current.currentTime;
-          if (now - lastBeatRef.current >= beatInterval) {
+        // fixed-rate spawning: 100 particles per minute
+        // spawn particles only when audio is playing
+        if (audioEnabled) {
+          const now = performance.now() / 1000;
+          if (now - lastBeatRef.current >= FIXED_SPAWN_INTERVAL) {
             lastBeatRef.current = now;
-            const count = 1;  // one particle per beat now
-            const centerX = virtualWidth/2, centerY = virtualHeight/2;
-            for (let i = 0; i < count; i++) {
-              const angle = Math.random() * Math.PI * 2;
-              const speed = 15 * (0.5 + Math.random());
-              const p = new Particle(centerX, centerY, Math.cos(angle)*speed, Math.sin(angle)*speed, 1, Math.random()*6+4);
-              p.lifetime = 1 + Math.random()*2;
-              world.addParticle(p);
-            }
+            const centerX = virtualWidth / 2;
+            const centerY = virtualHeight / 2;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 15 * (0.5 + Math.random());
+            const p = new Particle(
+              centerX,
+              centerY,
+              Math.cos(angle) * speed,
+              Math.sin(angle) * speed,
+              1,
+              Math.random() * 6 + 4
+            );
+            p.lifetime = 1 + Math.random() * 2;
+            world.addParticle(p);
           }
         }
+
         // manual bar collisions for audio bars (improves performance vs slopes)
         const bars: Array<{ x: number; width: number; height: number }> = [];
         if (audioEnabled && analyserRef.current && freqDataRef.current) {
@@ -395,15 +404,6 @@ export default function WorldCanvas() {
   const handleAudioFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // decode audio for BPM detection
-    const arrayBuffer = await file.arrayBuffer();
-    const tempCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
-    const signal = audioBuffer.getChannelData(0);
-    const mt = new MusicTempo(signal, { timeStep: 1 / audioBuffer.sampleRate });
-    console.log(`Detected BPM: ${mt.tempo}`);
-    // use the detected inter-beat interval in seconds
-    setBeatInterval(mt.beatInterval);
 
     const url = URL.createObjectURL(file);
     if (audioRef.current) {
@@ -424,8 +424,8 @@ export default function WorldCanvas() {
       source.connect(analyser);
       analyser.connect(audioCtx.destination);
 
-       analyserRef.current = analyser;
-       freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+      analyserRef.current = analyser;
+      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
 
       audioRef.current.play();
       setIsPlaying(true);
@@ -447,7 +447,30 @@ export default function WorldCanvas() {
             { headers: { Authorization: `Bearer ${access_token}` } }
           );
            const data = await res.json();
-           const art = data.tracks?.items[0]?.album?.images[0]?.url;
+           console.log('Spotify Search Response:', data);
+           const track = data.tracks?.items?.[0];
+           if (!track) {
+             console.warn('No track found for query', query);
+           } else {
+             console.log('Found track ID:', track.id);
+           }
+           const art = track?.album?.images[0]?.url;
+           // fetch tempo via Spotify audio-features
+           const trackId = track?.id;
+           if (trackId) {
+             const featRes = await fetch(
+               `https://api.spotify.com/v1/audio-features/${trackId}`,
+               { headers: { Authorization: `Bearer ${access_token}` } }
+             );
+             const features = await featRes.json();
+             console.log('Audio Features Response:', features);
+             if (features && typeof features.tempo === 'number') {
+               console.log(`Detected BPM: ${features.tempo}`);
+               setBeatInterval(60 / features.tempo);
+             } else {
+               console.warn('Spotify audio-features returned no tempo property', features);
+             }
+           }
            console.log('Album art URL:', art);
            if (art) {
              const img = new Image();
