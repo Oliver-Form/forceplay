@@ -608,8 +608,16 @@ export default function WorldCanvas() {
       {/* Persistent controls overlay */}
       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 20, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.5)', padding: '6px 10px', borderRadius: 4 }}>
         <button onClick={prevTrack} style={{ color: '#fff' }}>Prev</button>
-        <button onClick={togglePlay} style={{ color: '#fff' }}>{isPlaying ? 'Pause' : 'Play'}</button>
-        <button onClick={nextTrack} style={{ color: '#fff' }}>Next</button>
+        <button onClick={togglePlay} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
+          {isPlaying ? (
+            <img src="/pause.svg" alt="Pause" style={{ width: 24, height: 24 }} />
+          ) : (
+            <img src="/play-button.svg" alt="Play" style={{ width: 24, height: 24 }} />
+          )}
+        </button>
+        <button onClick={nextTrack} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
+          <img src="/next.svg" alt="Next" style={{ width: 24, height: 24 }} />
+        </button>
         <input
           type="file"
           accept="audio/*"
@@ -756,3 +764,4 @@ export default function WorldCanvas() {
 );
 }
 
+// replace Prev button with next button 
