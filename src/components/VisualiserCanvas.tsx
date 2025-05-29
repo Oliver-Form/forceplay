@@ -695,6 +695,23 @@ export default function WorldCanvas() {
           style={{ width: 160 }}
         />
         <span style={{ color: '#fff' }}>{Math.floor(currentTime)}/{Math.floor(duration)}s</span>
+        {playlist.length > 0 && (
+          <select
+            value={currentTrackIndex}
+            onChange={(e) => {
+              const idx = parseInt(e.target.value, 10);
+              setCurrentTrackIndex(idx);
+              loadTrack(playlist[idx]);
+            }}
+            style={{ color: '#fff', background: 'transparent', border: '1px solid #fff', borderRadius: 4, padding: '2px 4px' }}
+          >
+            {playlist.map((file, idx) => (
+              <option key={idx} value={idx}>
+                {file.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
     <div
@@ -739,4 +756,3 @@ export default function WorldCanvas() {
 );
 }
 
-//
