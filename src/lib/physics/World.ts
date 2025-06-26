@@ -69,8 +69,9 @@ import { Particle } from './Particle';
 
     // Run physics for each step ('time' delta dt)
     step(dt: number) {
-      // Run physics in multiple sub-steps to avoid tunneling at high speeds
-      const subSteps = 5;
+      // If any rope exists, use single integration step (no sub-stepping) to preserve circular/rope motion
+      const hasRope = this.ropes.length > 0;
+      const subSteps = hasRope ? 1 : 5;
       const subDt = dt / subSteps;
       for (let stepIdx = 0; stepIdx < subSteps; stepIdx++) {
         for (const p of this.particles) {
@@ -213,33 +214,44 @@ import { Particle } from './Particle';
             p.velocity.y *= -this.restitution;
           }
         }
-        // Rope constraints
-        for (const rope of this.ropes) {
-          const p1 = rope.start,
-            p2 = rope.end;
-          const dx = p2.position.x - p1.position.x,
-            dy = p2.position.y - p1.position.y;
-          const len = Math.sqrt(dx * dx + dy * dy) || 1;
-          const nx = dx / len,
-            ny = dy / len;
-          const diff = len - rope.length;
-          if (diff !== 0) {
-            const half = diff / 2;
-            if (!p1.isStationary && !p2.isStationary) {
-              p1.position.x += half * nx;
-              p1.position.y += half * ny;
-              p2.position.x -= half * nx;
-              p2.position.y -= half * ny;
-            } else if (!p1.isStationary) {
-              p1.position.x += diff * nx;
-              p1.position.y += diff * ny;
-            } else if (!p2.isStationary) {
-              p2.position.x -= diff * nx;
-              p2.position.y -= diff * ny;
-            }
+      }
+      // --- Rope constraints: enforce after all sub-steps ---
+      for (const rope of this.ropes) {
+        const p1 = rope.start, p2 = rope.end;
+        const dx = p2.position.x - p1.position.x;
+        const dy = p2.position.y - p1.position.y;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const nx = dx / len, ny = dy / len;
+        const diff = len - rope.length;
+        if (Math.abs(diff) > 1e-6) {
+          const half = diff / 2;
+          if (!p1.isStationary && !p2.isStationary) {
+            p1.position.x += half * nx;
+            p1.position.y += half * ny;
+            p2.position.x -= half * nx;
+            p2.position.y -= half * ny;
+          } else if (!p1.isStationary) {
+            p1.position.x += diff * nx;
+            p1.position.y += diff * ny;
+          } else if (!p2.isStationary) {
+            p2.position.x -= diff * nx;
+            p2.position.y -= diff * ny;
           }
+        }
+        // --- Velocity correction: remove velocity along rope direction ---
+        // Only correct for non-stationary particles
+        if (!p1.isStationary) {
+          const vDotN1 = p1.velocity.x * nx + p1.velocity.y * ny;
+          p1.velocity.x -= vDotN1 * nx;
+          p1.velocity.y -= vDotN1 * ny;
+        }
+        if (!p2.isStationary) {
+          const vDotN2 = p2.velocity.x * nx + p2.velocity.y * ny;
+          p2.velocity.x -= vDotN2 * nx;
+          p2.velocity.y -= vDotN2 * ny;
         }
       }
     }
   }
 
+//

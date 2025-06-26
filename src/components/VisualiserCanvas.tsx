@@ -764,4 +764,3 @@ export default function WorldCanvas() {
 );
 }
 
-// replace Prev button with next button 
